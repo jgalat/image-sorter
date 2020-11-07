@@ -1,6 +1,7 @@
 mod app;
 mod event;
 mod image_display;
+mod input;
 mod render;
 
 use anyhow::Result;
@@ -11,6 +12,7 @@ use tui::{backend::TermionBackend, Terminal};
 use crate::app::{App, TabId};
 use crate::event::{Event, EventsListener};
 use crate::image_display::ImageDisplay;
+use crate::input::{handle_app_key, handle_mapping_key};
 use crate::render::{render_layout, render_main};
 
 fn main() -> Result<()> {
@@ -41,6 +43,8 @@ fn main() -> Result<()> {
             Event::Tick => continue,
             Event::Input(Key::Ctrl('c')) => break,
             Event::Input(Key::BackTab) => app.switch_tab(),
+            Event::Input(Key::Ctrl(key)) => handle_app_key(key, &mut app),
+            Event::Input(Key::Char(key)) => handle_mapping_key(key, &mut app),
             _ => {}
         }
     }

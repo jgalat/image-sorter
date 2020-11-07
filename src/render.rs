@@ -50,7 +50,7 @@ pub fn render_main(
         .title(app.current_image());
     let next_up_block = Block::default().borders(Borders::ALL).title("Next up");
     let status_block = Block::default().borders(Borders::ALL).title("Status");
-    let key_bindings_block = Block::default().borders(Borders::ALL).title("Key bindings");
+    let key_mapping_block = Block::default().borders(Borders::ALL).title("Key mapping");
     let controls_block = Block::default().borders(Borders::ALL).title("Controls");
 
     let window_layout = Layout::default()
@@ -78,8 +78,8 @@ pub fn render_main(
     let status_container = status_block.inner(sidebar_layout[0]);
     render_status(f, app, status_container);
 
-    let key_bindings_container = key_bindings_block.inner(sidebar_layout[1]);
-    render_key_bindings(f, app, key_bindings_container);
+    let key_mapping_container = key_mapping_block.inner(sidebar_layout[1]);
+    render_key_mapping(f, app, key_mapping_container);
 
     let controls_container = controls_block.inner(sidebar_layout[2]);
     render_controls(f, controls_container);
@@ -91,7 +91,7 @@ pub fn render_main(
     f.render_widget(image_block, main_layout[0]);
     f.render_widget(next_up_block, main_layout[1]);
     f.render_widget(status_block, sidebar_layout[0]);
-    f.render_widget(key_bindings_block, sidebar_layout[1]);
+    f.render_widget(key_mapping_block, sidebar_layout[1]);
     f.render_widget(controls_block, sidebar_layout[2]);
 
     Ok(())
@@ -107,21 +107,21 @@ fn render_status(
     f.render_widget(paragraph, window);
 }
 
-fn render_key_bindings(
+fn render_key_mapping(
     f: &mut Frame<TermionBackend<AlternateScreen<RawTerminal<io::Stdout>>>>,
     app: &App,
     window: Rect,
 ) {
     let keys = app
-        .key_bindings
+        .key_mapping
         .iter()
         .map(|(key, path)| Row::Data(vec![key.to_string(), path.clone()].into_iter()));
-    let key_bindings = Table::new(["Key", "Path"].iter(), keys.into_iter())
+    let key_mapping = Table::new(["Key", "Path"].iter(), keys.into_iter())
         .widths([Constraint::Length(3), Constraint::Length(20)].as_ref())
         .header_gap(0)
         .header_style(Style::default().fg(Color::Red));
 
-    f.render_widget(key_bindings, window);
+    f.render_widget(key_mapping, window);
 }
 
 fn render_controls(
