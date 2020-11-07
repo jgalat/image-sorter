@@ -8,6 +8,6 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0.34"
-tui = { version = "0.9.4", features = ["termion"], default-features = false }
+tui = { version = "0.12.0", features = ["termion"], default-features = false }
 termion = "1.5.5"
 subprocess = "0.2.6"
