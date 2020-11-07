@@ -7,7 +7,7 @@ use tui::{
     style::{Color, Style},
     terminal::Frame,
     text::{Spans, Text},
-    widgets::{Block, Borders, Paragraph, Row, Table, Tabs, Wrap},
+    widgets::{Block, Borders, Paragraph, Row, Table, Tabs},
 };
 
 use crate::app::App;
@@ -45,8 +45,9 @@ pub fn render_main(
     image_display: &mut ImageDisplay,
     window: Rect,
 ) -> Result<()> {
-    let current_image = app.current_image();
-    let image_block = Block::default().borders(Borders::ALL).title(current_image);
+    let image_block = Block::default()
+        .borders(Borders::ALL)
+        .title(app.current_image());
     let next_up_block = Block::default().borders(Borders::ALL).title("Next up");
     let status_block = Block::default().borders(Borders::ALL).title("Status");
     let key_bindings_block = Block::default().borders(Borders::ALL).title("Key bindings");
@@ -54,12 +55,12 @@ pub fn render_main(
 
     let window_layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(75), Constraint::Percentage(25)].as_ref())
+        .constraints([Constraint::Min(10), Constraint::Length(30)].as_ref())
         .split(window);
 
     let main_layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(75), Constraint::Percentage(25)].as_ref())
+        .constraints([Constraint::Min(10), Constraint::Length(9)].as_ref())
         .split(window_layout[0]);
 
     let sidebar_layout = Layout::default()
@@ -68,7 +69,7 @@ pub fn render_main(
             [
                 Constraint::Length(3),
                 Constraint::Min(3),
-                Constraint::Percentage(25),
+                Constraint::Length(9),
             ]
             .as_ref(),
         )
@@ -77,12 +78,15 @@ pub fn render_main(
     let status_container = status_block.inner(sidebar_layout[0]);
     render_status(f, app, status_container);
 
+    let key_bindings_container = key_bindings_block.inner(sidebar_layout[1]);
+    render_key_bindings(f, app, key_bindings_container);
+
     let controls_container = controls_block.inner(sidebar_layout[2]);
     render_controls(f, controls_container);
 
     let terminal_size = f.size();
     let image_container = image_block.inner(main_layout[0]);
-    image_display.render_image(current_image, image_container, terminal_size)?;
+    image_display.render_image(app.current_image(), image_container, terminal_size)?;
 
     f.render_widget(image_block, main_layout[0]);
     f.render_widget(next_up_block, main_layout[1]);
@@ -101,6 +105,23 @@ fn render_status(
     let status = Text::from(format!("Sorted: {}/{}", app.current, app.images.len()));
     let paragraph = Paragraph::new(status).alignment(Alignment::Center);
     f.render_widget(paragraph, window);
+}
+
+fn render_key_bindings(
+    f: &mut Frame<TermionBackend<AlternateScreen<RawTerminal<io::Stdout>>>>,
+    app: &App,
+    window: Rect,
+) {
+    let keys = app
+        .key_bindings
+        .iter()
+        .map(|(key, path)| Row::Data(vec![key.to_string(), path.clone()].into_iter()));
+    let key_bindings = Table::new(["Key", "Path"].iter(), keys.into_iter())
+        .widths([Constraint::Length(3), Constraint::Length(20)].as_ref())
+        .header_gap(0)
+        .header_style(Style::default().fg(Color::Red));
+
+    f.render_widget(key_bindings, window);
 }
 
 fn render_controls(

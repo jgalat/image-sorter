@@ -39,7 +39,7 @@ impl ImageDisplay {
         }
     }
 
-    pub fn render_image(&mut self, image_path: &str, block: Rect, terminal: Rect) -> Result<()> {
+    pub fn render_image(&mut self, image_path: String, block: Rect, terminal: Rect) -> Result<()> {
         let mut process = Popen::create(
             &[&self.path],
             PopenConfig {
@@ -54,7 +54,7 @@ impl ImageDisplay {
         Ok(())
     }
 
-    fn w3m_input(&mut self, image_path: &str, block: Rect, terminal: Rect) -> Result<String> {
+    fn w3m_input(&mut self, image_path: String, block: Rect, terminal: Rect) -> Result<String> {
         let (fontw, fonth) = self.font_dimensions(terminal)?;
 
         let start_x = (block.x as u32 + 1) * fontw;
@@ -63,7 +63,7 @@ impl ImageDisplay {
         let max_width = (block.width as u32 - 1) * fontw;
         let max_height = (block.height as u32 - 1) * fonth;
 
-        let (mut width, mut height) = self.image_dimensions(image_path)?;
+        let (mut width, mut height) = self.image_dimensions(&image_path)?;
         if width > max_width {
             // width _ height
             // max_width _ max_wdtih * height / width
@@ -85,7 +85,7 @@ impl ImageDisplay {
         Ok(input)
     }
 
-    fn image_dimensions(&mut self, image_path: &str) -> Result<(u32, u32)> {
+    fn image_dimensions(&mut self, image_path: &String) -> Result<(u32, u32)> {
         let input = format!("5;{}\n", image_path);
         let mut process = Popen::create(
             &[&self.path],
