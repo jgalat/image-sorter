@@ -7,7 +7,7 @@ use tui::{
     style::{Color, Style},
     terminal::Frame,
     text::{Spans, Text},
-    widgets::{Block, Borders, Paragraph, Tabs, Wrap},
+    widgets::{Block, Borders, Paragraph, Row, Table, Tabs, Wrap},
 };
 
 use crate::app::App;
@@ -47,33 +47,48 @@ pub fn render_main(
 ) -> Result<()> {
     let current_image = app.current_image();
     let image_block = Block::default().borders(Borders::ALL).title(current_image);
-
-    let controls_block = Block::default().borders(Borders::ALL).title("Controls");
+    let next_up_block = Block::default().borders(Borders::ALL).title("Next up");
     let status_block = Block::default().borders(Borders::ALL).title("Status");
+    let key_bindings_block = Block::default().borders(Borders::ALL).title("Key bindings");
+    let controls_block = Block::default().borders(Borders::ALL).title("Controls");
 
     let window_layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(70), Constraint::Percentage(30)].as_ref())
+        .constraints([Constraint::Percentage(75), Constraint::Percentage(25)].as_ref())
         .split(window);
 
-    let sidebar = Layout::default()
+    let main_layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(3), Constraint::Min(5)].as_ref())
+        .constraints([Constraint::Percentage(75), Constraint::Percentage(25)].as_ref())
+        .split(window_layout[0]);
+
+    let sidebar_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Length(3),
+                Constraint::Min(3),
+                Constraint::Percentage(25),
+            ]
+            .as_ref(),
+        )
         .split(window_layout[1]);
 
-    let status_container = status_block.inner(sidebar[0]);
+    let status_container = status_block.inner(sidebar_layout[0]);
     render_status(f, app, status_container);
 
-    let controls_container = controls_block.inner(sidebar[1]);
+    let controls_container = controls_block.inner(sidebar_layout[2]);
     render_controls(f, controls_container);
 
     let terminal_size = f.size();
-    let image_container = image_block.inner(window_layout[0]);
+    let image_container = image_block.inner(main_layout[0]);
     image_display.render_image(current_image, image_container, terminal_size)?;
 
-    f.render_widget(image_block, window_layout[0]);
-    f.render_widget(status_block, sidebar[0]);
-    f.render_widget(controls_block, sidebar[1]);
+    f.render_widget(image_block, main_layout[0]);
+    f.render_widget(next_up_block, main_layout[1]);
+    f.render_widget(status_block, sidebar_layout[0]);
+    f.render_widget(key_bindings_block, sidebar_layout[1]);
+    f.render_widget(controls_block, sidebar_layout[2]);
 
     Ok(())
 }
@@ -83,7 +98,7 @@ fn render_status(
     app: &App,
     window: Rect,
 ) {
-    let status = Text::from(format!("{}/{}", app.current + 1, app.images.len()));
+    let status = Text::from(format!("Sorted: {}/{}", app.current, app.images.len()));
     let paragraph = Paragraph::new(status).alignment(Alignment::Center);
     f.render_widget(paragraph, window);
 }
@@ -92,17 +107,21 @@ fn render_controls(
     f: &mut Frame<TermionBackend<AlternateScreen<RawTerminal<io::Stdout>>>>,
     window: Rect,
 ) {
-    let controls = Text::from(
-        r#"Ctrl-C - Exit
-        Shift-Tab - Change tabs
+    let controls = Table::new(
+        ["Key", "Action"].iter(),
+        vec![
+            Row::Data(["Ctrl-C", "Exit"].iter()),
+            Row::Data(["Shift-Tab", "Switch tabs"].iter()),
+            Row::Data(["", ""].iter()),
+            Row::Data(["Ctrl-S", "Skip image"].iter()),
+            Row::Data(["Ctrl-Z", "Undo action"].iter()),
+            Row::Data(["Ctrl-W", "Commit actions"].iter()),
+        ]
+        .into_iter(),
+    )
+    .widths([Constraint::Length(10), Constraint::Length(20)].as_ref())
+    .header_gap(0)
+    .header_style(Style::default().fg(Color::Red));
 
-        Ctrl-S - Skip image
-        Ctrl-Z - Undo action
-        Ctrl-W - Commit actions
-        "#,
-    );
-
-    let paragraph = Paragraph::new(controls).wrap(Wrap { trim: true });
-
-    f.render_widget(paragraph, window);
+    f.render_widget(controls, window);
 }
