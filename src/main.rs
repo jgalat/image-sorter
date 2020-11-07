@@ -13,7 +13,7 @@ use crate::app::{App, TabId};
 use crate::event::{Event, EventsListener};
 use crate::image_display::ImageDisplay;
 use crate::input::{handle_app_key, handle_mapping_key};
-use crate::render::{render_layout, render_main};
+use crate::render::{render_layout, render_main, render_script};
 
 fn main() -> Result<()> {
     let mut app = App::new();
@@ -32,7 +32,7 @@ fn main() -> Result<()> {
             let window = render_layout(&mut f, &app);
             if let Err(err) = match app.current_tab() {
                 TabId::Main => render_main(&mut f, &app, &mut image_display, window),
-                TabId::Script => Ok(()),
+                TabId::Script => render_script(&mut f, &app, window),
             } {
                 eprintln!("ERROR: {}", err);
                 panic!(err);

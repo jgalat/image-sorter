@@ -146,3 +146,25 @@ fn render_controls(
 
     f.render_widget(controls, window);
 }
+
+pub fn render_script(
+    f: &mut Frame<TermionBackend<AlternateScreen<RawTerminal<io::Stdout>>>>,
+    app: &App,
+    window: Rect,
+) -> Result<()> {
+    let mut lines = vec![];
+    for (image, path) in app.actions.iter() {
+        if let Some(path) = path {
+            lines.push(format!("mv {} {}", image, path));
+        }
+    }
+
+    let script_block = Block::default().borders(Borders::ALL);
+
+    let text = Text::from(lines.join("\n"));
+    let paragraph = Paragraph::new(text).block(script_block);
+
+    f.render_widget(paragraph, window);
+
+    Ok(())
+}
