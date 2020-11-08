@@ -48,7 +48,6 @@ pub fn render_main(
     let image_block = Block::default()
         .borders(Borders::ALL)
         .title(app.current_image());
-    let next_up_block = Block::default().borders(Borders::ALL).title("Next up");
     let status_block = Block::default().borders(Borders::ALL).title("Status");
     let key_mapping_block = Block::default().borders(Borders::ALL).title("Key mapping");
     let controls_block = Block::default().borders(Borders::ALL).title("Controls");
@@ -60,7 +59,7 @@ pub fn render_main(
 
     let main_layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(10), Constraint::Length(9)].as_ref())
+        .constraints([Constraint::Min(10)].as_ref())
         .split(window_layout[0]);
 
     let sidebar_layout = Layout::default()
@@ -89,7 +88,6 @@ pub fn render_main(
     image_display.render_image(app.current_image(), image_container, terminal_size)?;
 
     f.render_widget(image_block, main_layout[0]);
-    f.render_widget(next_up_block, main_layout[1]);
     f.render_widget(status_block, sidebar_layout[0]);
     f.render_widget(key_mapping_block, sidebar_layout[1]);
     f.render_widget(controls_block, sidebar_layout[2]);
