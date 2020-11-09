@@ -10,7 +10,7 @@ use tui::{
     widgets::{Block, Borders, Paragraph, Row, Table, Tabs},
 };
 
-use crate::app::App;
+use crate::app::{Action, App};
 use crate::image_display::ImageDisplay;
 
 pub fn render_layout(
@@ -151,9 +151,11 @@ pub fn render_script(
     window: Rect,
 ) -> Result<()> {
     let mut lines = vec![];
-    for (image, path) in app.actions.iter() {
-        if let Some(path) = path {
-            lines.push(format!("mv {} {}", image, path));
+    for action in app.actions.iter() {
+        match action {
+            Action::Skip(image) => lines.push(format!("# Skip {}", image)),
+            Action::Move(image, path) => lines.push(format!("mv {} {}", image, path)),
+            Action::MkDir(path) => lines.push(format!("mkdir -p {}", path)),
         }
     }
 

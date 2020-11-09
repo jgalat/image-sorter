@@ -5,6 +5,7 @@ mod input;
 mod render;
 
 use anyhow::Result;
+use clap::{App as ClapApp, Arg};
 use std::io;
 use termion::{event::Key, raw::IntoRawMode, screen::AlternateScreen};
 use tui::{backend::TermionBackend, Terminal};
@@ -16,7 +17,36 @@ use crate::input::{handle_app_key, handle_mapping_key};
 use crate::render::{render_layout, render_main, render_script};
 
 fn main() -> Result<()> {
-    let mut app = App::new();
+    let matches = ClapApp::new(env!("CARGO_PKG_NAME"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .about(env!("CARGO_PKG_DESCRIPTION"))
+        .arg(
+            Arg::with_name("bind")
+                .help("Bind a char to a folder")
+                .short("b")
+                .long("bind")
+                .takes_value(true)
+                .number_of_values(2)
+                .value_names(&["char", "folder"])
+                .required(true)
+                .multiple(true),
+        )
+        .arg(
+            Arg::with_name("input")
+                .help("Input images or folders to sort")
+                .takes_value(true)
+                .required(true)
+                .last(true),
+        )
+        .get_matches();
+
+    let mut app = App::default();
+
+    let bind_args = matches.values_of("bind").unwrap().collect();
+    let input_args = matches.values_of("input").unwrap().collect();
+    app.parse_key_mapping(bind_args)?;
+    app.parse_input_files(input_args)?;
 
     let stdout = io::stdout().into_raw_mode()?;
     let stdout = AlternateScreen::from(stdout);
@@ -34,7 +64,7 @@ fn main() -> Result<()> {
                 TabId::Main => render_main(&mut f, &app, &mut image_display, window),
                 TabId::Script => render_script(&mut f, &app, window),
             } {
-                eprintln!("ERROR: {}", err);
+                eprintln!("ERROR: {:?}", err);
                 panic!(err);
             }
         })?;

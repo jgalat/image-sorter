@@ -1,15 +1,19 @@
-use crate::app::App;
+use crate::app::{Action, App, TabId};
 
 pub fn handle_app_key(key: char, app: &mut App) {
     match key {
-        's' => app.add_action(None),
-        'z' => app.revert_action(),
+        's' => app.push_action(Action::Skip(app.current_image())),
+        'z' => app.pop_action(),
         _ => {}
     }
 }
 
 pub fn handle_mapping_key(key: char, app: &mut App) {
-    if let Some(path) = &mut app.key_mapping.get(&key).cloned() {
-        app.add_action(Some(path.clone()));
+    if app.current_tab() != TabId::Main {
+        return;
+    }
+
+    if let Some(path) = app.key_mapping.get(&key).cloned() {
+        app.push_action(Action::Move(app.current_image(), path));
     }
 }
