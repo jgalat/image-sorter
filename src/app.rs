@@ -19,6 +19,7 @@ pub enum Action {
 
 pub struct App {
     pub tab: usize,
+    pub script_offset: (u16, u16),
     pub images: Vec<String>,
     pub current: usize,
     pub key_mapping: HashMap<char, String>,
@@ -30,6 +31,7 @@ impl Default for App {
     fn default() -> Self {
         App {
             tab: 0,
+            script_offset: (0, 0),
             images: vec![],
             current: 0,
             key_mapping: HashMap::new(),
@@ -67,7 +69,34 @@ impl App {
     }
 
     pub fn switch_tab(&mut self) {
-        self.tab = (self.tab + 1) % TABS.len()
+        self.tab = (self.tab + 1) % TABS.len();
+        self.script_offset = (0, 0);
+    }
+
+    pub fn scroll_up(&mut self) {
+        let (y, x) = self.script_offset;
+        if y > 0 {
+            self.script_offset = (y - 1, x);
+        }
+    }
+
+    pub fn scroll_down(&mut self) {
+        let (y, x) = self.script_offset;
+        if y < self.actions.len() as u16 + 3 {
+            self.script_offset = (y + 1, x);
+        }
+    }
+
+    pub fn scroll_left(&mut self) {
+        let (y, x) = self.script_offset;
+        if x > 0 {
+            self.script_offset = (y, x - 1);
+        }
+    }
+
+    pub fn scroll_right(&mut self) {
+        let (y, x) = self.script_offset;
+        self.script_offset = (y, x + 1);
     }
 
     pub fn parse_key_mapping(&mut self, args: Vec<&str>) -> Result<()> {

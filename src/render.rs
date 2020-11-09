@@ -164,7 +164,10 @@ pub fn render_script(
             ),
             comment_style,
         ),
-        Span::styled("# Use the arrows (or j/k) to scroll", comment_style),
+        Span::styled(
+            "# Use the arrows keys (or h j k l) to scroll",
+            comment_style,
+        ),
     ];
 
     for action in app.actions.iter() {
@@ -181,7 +184,9 @@ pub fn render_script(
 
     let script_block = Block::default().borders(Borders::ALL);
 
-    let paragraph = Paragraph::new(lines).block(script_block);
+    let paragraph = Paragraph::new(lines)
+        .block(script_block)
+        .scroll(app.script_offset);
 
     f.render_widget(paragraph, window);
 

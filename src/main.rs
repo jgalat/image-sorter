@@ -13,7 +13,7 @@ use tui::{backend::TermionBackend, Terminal};
 use crate::app::{App, TabId};
 use crate::event::{Event, EventsListener};
 use crate::image_display::ImageDisplay;
-use crate::input::{handle_app_key, handle_mapping_key};
+use crate::input::{handle_key_main, handle_key_script};
 use crate::render::{render_layout, render_main, render_script};
 
 fn main() -> Result<()> {
@@ -85,9 +85,10 @@ fn main() -> Result<()> {
             Event::Tick => continue,
             Event::Input(Key::Ctrl('c')) => break,
             Event::Input(Key::BackTab) => app.switch_tab(),
-            Event::Input(Key::Ctrl(key)) => handle_app_key(key, &mut app),
-            Event::Input(Key::Char(key)) => handle_mapping_key(key, &mut app),
-            _ => {}
+            Event::Input(key) => match app.current_tab() {
+                TabId::Main => handle_key_main(key, &mut app),
+                TabId::Script => handle_key_script(key, &mut app),
+            },
         }
     }
 
