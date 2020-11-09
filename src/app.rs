@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
-use std::collections::HashMap;
-use std::path::Path;
+use std::io::prelude::*;
+use std::{collections::HashMap, fs::File, path::Path};
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum TabId {
@@ -147,6 +147,26 @@ impl App {
         }
 
         self.images = images;
+        Ok(())
+    }
+
+    pub fn write(&self) -> Result<()> {
+        let mut lines: Vec<String> = vec!["#!/bin/sh".to_string()];
+
+        for action in self.actions.iter() {
+            match action {
+                Action::MkDir(folder) => lines.push(format!("mkdir -p {}", folder)),
+                Action::Move(image_path, folder) => {
+                    lines.push(format!("mv {} {}", image_path, folder))
+                }
+                _ => {}
+            }
+        }
+
+        let script = lines.join("\n");
+        let mut file = File::create(&self.output)?;
+        file.write_all(script.as_bytes())?;
+
         Ok(())
     }
 

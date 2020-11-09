@@ -84,6 +84,7 @@ fn main() -> Result<()> {
         match events_listener.next()? {
             Event::Tick => continue,
             Event::Input(Key::Ctrl('c')) => break,
+            Event::Input(Key::Ctrl('w')) => app.write()?,
             Event::Input(Key::BackTab) => app.switch_tab(),
             Event::Input(key) => match app.current_tab() {
                 TabId::Main => handle_key_main(key, &mut app),

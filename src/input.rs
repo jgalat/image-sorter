@@ -18,7 +18,6 @@ fn handle_app_key(key: char, app: &mut App) {
             }
         }
         'z' => app.pop_action(),
-        'w' => {}
         _ => {}
     }
 }
@@ -33,7 +32,6 @@ fn handle_mapping_key(key: char, app: &mut App) {
 
 pub fn handle_key_script(key: Key, app: &mut App) {
     match key {
-        Key::Ctrl(key) => handle_app_key(key, app),
         Key::Up | Key::Char('k') => app.scroll_up(),
         Key::Down | Key::Char('j') => app.scroll_down(),
         Key::Left | Key::Char('h') => app.scroll_left(),
