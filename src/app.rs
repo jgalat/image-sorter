@@ -17,9 +17,15 @@ pub enum Action {
     MkDir(String),
 }
 
+#[derive(Clone)]
+pub enum Image {
+    BlankImage,
+    Image(String),
+}
+
 pub struct App {
     pub tab: usize,
-    pub images: Vec<String>,
+    pub images: Vec<Image>,
     pub current: usize,
     pub key_mapping: HashMap<char, String>,
     pub actions: Vec<Action>,
@@ -38,7 +44,10 @@ impl Default for App {
 }
 
 impl App {
-    pub fn current_image(&self) -> String {
+    pub fn current_image(&self) -> Image {
+        if self.current == self.images.len() {
+            return Image::BlankImage;
+        }
         self.images[self.current].clone()
     }
 
@@ -50,8 +59,8 @@ impl App {
     }
 
     pub fn push_action(&mut self, action: Action) {
-        self.actions.push(action);
-        if self.current < self.images.len() - 1 {
+        if self.current < self.images.len() {
+            self.actions.push(action);
             self.current += 1;
         }
     }
@@ -88,12 +97,15 @@ impl App {
     }
 
     pub fn parse_input_files(&mut self, args: Vec<&str>) -> Result<()> {
-        let mut images: Vec<String> = vec![];
+        let mut images: Vec<Image> = vec![];
+
         for input in args.iter() {
             let path = Path::new(input);
+
             if path.is_file() && App::is_image(&path) {
-                images.push(input.to_string());
+                images.push(Image::Image(input.to_string()));
             }
+
             if path.is_dir() {
                 let entries = path.read_dir()?;
                 for entry in entries {
@@ -101,7 +113,7 @@ impl App {
                         let path = entry.path();
                         let path_str = path.to_str();
                         if App::is_image(&path) && path_str.is_some() {
-                            images.push(path_str.unwrap().to_string());
+                            images.push(Image::Image(path_str.unwrap().to_string()));
                         }
                     }
                 }

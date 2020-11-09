@@ -29,24 +29,24 @@ fn main() -> Result<()> {
                 .takes_value(true)
                 .number_of_values(2)
                 .value_names(&["char", "folder"])
-                .required(true)
                 .multiple(true),
         )
         .arg(
             Arg::with_name("input")
                 .help("Input images or folders to sort")
                 .takes_value(true)
-                .required(true)
                 .last(true),
         )
         .get_matches();
 
     let mut app = App::default();
 
-    let bind_args = matches.values_of("bind").unwrap().collect();
-    let input_args = matches.values_of("input").unwrap().collect();
-    app.parse_key_mapping(bind_args)?;
-    app.parse_input_files(input_args)?;
+    if let Some(bind_args) = matches.values_of("bind") {
+        app.parse_key_mapping(bind_args.collect())?;
+    }
+    if let Some(input_args) = matches.values_of("input") {
+        app.parse_input_files(input_args.collect())?;
+    }
 
     let stdout = io::stdout().into_raw_mode()?;
     let stdout = AlternateScreen::from(stdout);

@@ -6,11 +6,11 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     terminal::Frame,
-    text::{Spans, Text},
+    text::{Span, Spans, Text},
     widgets::{Block, Borders, Paragraph, Row, Table, Tabs},
 };
 
-use crate::app::{Action, App};
+use crate::app::{Action, App, Image};
 use crate::image_display::ImageDisplay;
 
 pub fn render_layout(
@@ -45,9 +45,11 @@ pub fn render_main(
     image_display: &mut ImageDisplay,
     window: Rect,
 ) -> Result<()> {
-    let image_block = Block::default()
-        .borders(Borders::ALL)
-        .title(app.current_image());
+    let image_title = match app.current_image() {
+        Image::BlankImage => "There are no more images left to sort".to_string(),
+        Image::Image(image_path) => image_path,
+    };
+    let image_block = Block::default().borders(Borders::ALL).title(image_title);
     let status_block = Block::default().borders(Borders::ALL).title("Status");
     let key_mapping_block = Block::default().borders(Borders::ALL).title("Key mapping");
     let controls_block = Block::default().borders(Borders::ALL).title("Controls");
@@ -83,9 +85,11 @@ pub fn render_main(
     let controls_container = controls_block.inner(sidebar_layout[2]);
     render_controls(f, controls_container);
 
-    let terminal_size = f.size();
-    let image_container = image_block.inner(main_layout[0]);
-    image_display.render_image(app.current_image(), image_container, terminal_size)?;
+    if let Image::Image(image_path) = app.current_image() {
+        let terminal_size = f.size();
+        let image_container = image_block.inner(main_layout[0]);
+        image_display.render_image(image_path, image_container, terminal_size)?;
+    }
 
     f.render_widget(image_block, main_layout[0]);
     f.render_widget(status_block, sidebar_layout[0]);
@@ -115,7 +119,7 @@ fn render_key_mapping(
         .iter()
         .map(|(key, path)| Row::Data(vec![key.to_string(), path.clone()].into_iter()));
     let key_mapping = Table::new(["Key", "Path"].iter(), keys.into_iter())
-        .widths([Constraint::Length(3), Constraint::Length(20)].as_ref())
+        .widths([Constraint::Length(3), Constraint::Length(25)].as_ref())
         .header_gap(0)
         .header_style(Style::default().fg(Color::Red));
 
@@ -150,19 +154,27 @@ pub fn render_script(
     app: &App,
     window: Rect,
 ) -> Result<()> {
-    let mut lines = vec![];
+    let comment_style = Style::default().fg(Color::Yellow);
+    let mut lines = vec![Span::styled(
+        "# Press Ctrl+W to save the following script to ...",
+        comment_style,
+    )];
+
     for action in app.actions.iter() {
         match action {
-            Action::Skip(image) => lines.push(format!("# Skip {}", image)),
-            Action::Move(image, path) => lines.push(format!("mv {} {}", image, path)),
-            Action::MkDir(path) => lines.push(format!("mkdir -p {}", path)),
+            Action::Skip(image) => {
+                lines.push(Span::styled(format!("# Skipped {}", image), comment_style))
+            }
+            Action::Move(image, path) => lines.push(Span::from(format!("mv {} {}", image, path))),
+            Action::MkDir(path) => lines.push(Span::from(format!("mkdir -p {}", path))),
         }
     }
 
+    let lines: Vec<Spans> = lines.into_iter().map(Spans::from).collect();
+
     let script_block = Block::default().borders(Borders::ALL);
 
-    let text = Text::from(lines.join("\n"));
-    let paragraph = Paragraph::new(text).block(script_block);
+    let paragraph = Paragraph::new(lines).block(script_block);
 
     f.render_widget(paragraph, window);
 
