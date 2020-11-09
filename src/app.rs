@@ -23,6 +23,7 @@ pub struct App {
     pub current: usize,
     pub key_mapping: HashMap<char, String>,
     pub actions: Vec<Action>,
+    pub output: String,
 }
 
 impl Default for App {
@@ -33,6 +34,7 @@ impl Default for App {
             current: 0,
             key_mapping: HashMap::new(),
             actions: vec![],
+            output: "sort.sh".to_string(),
         }
     }
 }

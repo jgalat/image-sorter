@@ -46,7 +46,7 @@ pub fn render_main(
     window: Rect,
 ) -> Result<()> {
     let image_title = match app.current_image() {
-        None => "There are no more images left to sort".to_string(),
+        None => "No more images left to sort".to_string(),
         Some(image_path) => image_path,
     };
     let image_block = Block::default().borders(Borders::ALL).title(image_title);
@@ -138,7 +138,7 @@ fn render_controls(
             Row::Data(["", ""].iter()),
             Row::Data(["Ctrl-S", "Skip image"].iter()),
             Row::Data(["Ctrl-Z", "Undo action"].iter()),
-            Row::Data(["Ctrl-W", "Commit actions"].iter()),
+            Row::Data(["Ctrl-W", "Save script"].iter()),
         ]
         .into_iter(),
     )
@@ -155,10 +155,17 @@ pub fn render_script(
     window: Rect,
 ) -> Result<()> {
     let comment_style = Style::default().fg(Color::Yellow);
-    let mut lines = vec![Span::styled(
-        "# Press Ctrl+W to save the following script to ...",
-        comment_style,
-    )];
+    let mut lines = vec![
+        Span::styled("#!/bin/sh", comment_style),
+        Span::styled(
+            format!(
+                "# Press Ctrl+W to save the following script to {}",
+                app.output
+            ),
+            comment_style,
+        ),
+        Span::styled("# Use the arrows (or j/k) to scroll", comment_style),
+    ];
 
     for action in app.actions.iter() {
         match action {

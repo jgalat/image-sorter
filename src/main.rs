@@ -32,6 +32,15 @@ fn main() -> Result<()> {
                 .multiple(true),
         )
         .arg(
+            Arg::with_name("output")
+                .help("Name the output script")
+                .short("o")
+                .long("output")
+                .takes_value(true)
+                .number_of_values(1)
+                .value_names(&["file"]),
+        )
+        .arg(
             Arg::with_name("input")
                 .help("Input images or folders to sort")
                 .takes_value(true)
@@ -46,6 +55,9 @@ fn main() -> Result<()> {
     }
     if let Some(input_args) = matches.values_of("input") {
         app.parse_input_files(input_args.collect())?;
+    }
+    if let Some(output_arg) = matches.value_of("output") {
+        app.output = output_arg.to_string();
     }
 
     let stdout = io::stdout().into_raw_mode()?;
