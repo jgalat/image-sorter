@@ -10,7 +10,7 @@ use tui::{
     widgets::{Block, Borders, Paragraph, Row, Table, Tabs},
 };
 
-use crate::app::{Action, App, Image};
+use crate::app::{Action, App};
 use crate::image_display::ImageDisplay;
 
 pub fn render_layout(
@@ -46,8 +46,8 @@ pub fn render_main(
     window: Rect,
 ) -> Result<()> {
     let image_title = match app.current_image() {
-        Image::BlankImage => "There are no more images left to sort".to_string(),
-        Image::Image(image_path) => image_path,
+        None => "There are no more images left to sort".to_string(),
+        Some(image_path) => image_path,
     };
     let image_block = Block::default().borders(Borders::ALL).title(image_title);
     let status_block = Block::default().borders(Borders::ALL).title("Status");
@@ -85,7 +85,7 @@ pub fn render_main(
     let controls_container = controls_block.inner(sidebar_layout[2]);
     render_controls(f, controls_container);
 
-    if let Image::Image(image_path) = app.current_image() {
+    if let Some(image_path) = app.current_image() {
         let terminal_size = f.size();
         let image_container = image_block.inner(main_layout[0]);
         image_display.render_image(image_path, image_container, terminal_size)?;

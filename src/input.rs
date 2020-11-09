@@ -1,9 +1,9 @@
-use crate::app::{Action, App, Image, TabId};
+use crate::app::{Action, App, TabId};
 
 pub fn handle_app_key(key: char, app: &mut App) {
     match key {
         's' => {
-            if let Image::Image(image_path) = app.current_image() {
+            if let Some(image_path) = app.current_image() {
                 app.push_action(Action::Skip(image_path));
             }
         }
@@ -18,7 +18,7 @@ pub fn handle_mapping_key(key: char, app: &mut App) {
     }
 
     if let Some(path) = app.key_mapping.get(&key).cloned() {
-        if let Image::Image(image_path) = app.current_image() {
+        if let Some(image_path) = app.current_image() {
             app.push_action(Action::Move(image_path, path));
         }
     }

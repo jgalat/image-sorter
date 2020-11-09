@@ -17,15 +17,9 @@ pub enum Action {
     MkDir(String),
 }
 
-#[derive(Clone)]
-pub enum Image {
-    BlankImage,
-    Image(String),
-}
-
 pub struct App {
     pub tab: usize,
-    pub images: Vec<Image>,
+    pub images: Vec<String>,
     pub current: usize,
     pub key_mapping: HashMap<char, String>,
     pub actions: Vec<Action>,
@@ -44,11 +38,12 @@ impl Default for App {
 }
 
 impl App {
-    pub fn current_image(&self) -> Image {
+    pub fn current_image(&self) -> Option<String> {
         if self.current == self.images.len() {
-            return Image::BlankImage;
+            return None;
         }
-        self.images[self.current].clone()
+
+        Some(self.images[self.current].clone())
     }
 
     pub fn pop_action(&mut self) {
@@ -97,13 +92,13 @@ impl App {
     }
 
     pub fn parse_input_files(&mut self, args: Vec<&str>) -> Result<()> {
-        let mut images: Vec<Image> = vec![];
+        let mut images: Vec<String> = vec![];
 
         for input in args.iter() {
             let path = Path::new(input);
 
             if path.is_file() && App::is_image(&path) {
-                images.push(Image::Image(input.to_string()));
+                images.push(input.to_string());
             }
 
             if path.is_dir() {
@@ -113,7 +108,7 @@ impl App {
                         let path = entry.path();
                         let path_str = path.to_str();
                         if App::is_image(&path) && path_str.is_some() {
-                            images.push(Image::Image(path_str.unwrap().to_string()));
+                            images.push(path_str.unwrap().to_string());
                         }
                     }
                 }
