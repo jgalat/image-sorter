@@ -44,6 +44,7 @@ fn main() -> Result<()> {
             Arg::with_name("input")
                 .help("Input images or folders to sort")
                 .takes_value(true)
+                .multiple(true)
                 .last(true),
         )
         .get_matches();
