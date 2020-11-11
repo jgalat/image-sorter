@@ -26,6 +26,10 @@ To update, run
 cargo install image-sorter --force
 ```
 
+### Release
+
+Find the latest release [here](https://github.com/jgalat/image-sorter/releases).
+
 ### Repository
 
 Requires `cargo` to be installed.
