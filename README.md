@@ -41,7 +41,7 @@ cargo install --path .
 Once installed, run the following to print the help message
 
 ```bash
-image-sorte --help
+image-sorter --help
 ```
 
 Here is an example usage
