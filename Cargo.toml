@@ -1,6 +1,10 @@
 [package]
 name = "image-sorter"
 description = "A terminal user interface for sorting images"
+keywords = ["image", "sort", "tui", "cli"]
+categories = ["command-line-utilities"]
+repository = "https://github.com/jgalat/image-sorter"
+exclude = [".github/*"]
 version = "0.1.0"
 authors = ["Jorge Galat <jrgglt@gmail.com>"]
 edition = "2018"
@@ -14,3 +18,8 @@ clap = "2.33.3"
 subprocess = "0.2.6"
 tui = { version = "0.12.0", features = ["termion"], default-features = false }
 termion = "1.5.5"
+
+[[bin]]
+bench = false
+path = "src/main.rs"
+name = "image-sorter"
