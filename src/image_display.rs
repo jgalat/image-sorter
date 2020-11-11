@@ -40,6 +40,7 @@ impl ImageDisplay {
     }
 
     pub fn render_image(&mut self, image_path: String, block: Rect, terminal: Rect) -> Result<()> {
+        let input = self.w3m_input(image_path, block, terminal)?;
         let mut process = Popen::create(
             &[&self.path],
             PopenConfig {
@@ -48,7 +49,6 @@ impl ImageDisplay {
                 ..PopenConfig::default()
             },
         )?;
-        let input = self.w3m_input(image_path, block, terminal)?;
         process.communicate(Some(&input))?;
         process.kill()?;
         Ok(())
@@ -124,6 +124,7 @@ impl ImageDisplay {
         )?;
 
         let (out, err) = process.communicate(None)?;
+        process.kill()?;
         if err.is_some() || out.is_none() {
             return Err(anyhow!("w3mimagedisplay failed -test"));
         }
