@@ -22,27 +22,27 @@ fn main() -> Result<()> {
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
         .arg(
-            Arg::with_name("bind")
+            Arg::with_name("BIND")
                 .help("Bind a char to a folder")
                 .short("b")
                 .long("bind")
                 .takes_value(true)
                 .number_of_values(2)
-                .value_names(&["char", "folder"])
+                .value_names(&["CHAR", "FOLDER"])
                 .multiple(true),
         )
         .arg(
-            Arg::with_name("output")
+            Arg::with_name("OUTPUT")
                 .help("Name the output script")
                 .short("o")
                 .long("output")
                 .takes_value(true)
                 .number_of_values(1)
-                .value_names(&["file"]),
+                .value_names(&["FILE"]),
         )
         .arg(
-            Arg::with_name("input")
-                .help("Input images or folders to sort")
+            Arg::with_name("INPUT")
+                .help("Images or folders containing images to sort")
                 .takes_value(true)
                 .multiple(true)
                 .last(true),
@@ -51,13 +51,13 @@ fn main() -> Result<()> {
 
     let mut app = App::default();
 
-    if let Some(bind_args) = matches.values_of("bind") {
+    if let Some(bind_args) = matches.values_of("BIND") {
         app.parse_key_mapping(bind_args.collect())?;
     }
-    if let Some(input_args) = matches.values_of("input") {
+    if let Some(input_args) = matches.values_of("INPUT") {
         app.parse_input_files(input_args.collect())?;
     }
-    if let Some(output_arg) = matches.value_of("output") {
+    if let Some(output_arg) = matches.value_of("OUTPUT") {
         app.output = output_arg.to_string();
     }
 
