@@ -17,7 +17,7 @@ impl ImageDisplay {
             "/usr/local/libexec/w3m/w3mimgdisplay",
         ];
 
-        let env_path = env::var("W3MIMGDISPLAY_PATH").unwrap_or("".to_string());
+        let env_path = env::var("W3MIMGDISPLAY_PATH").unwrap_or_else(|_| "".to_string());
         if !env_path.is_empty() {
             paths.insert(0, &env_path);
         }
@@ -85,7 +85,7 @@ impl ImageDisplay {
         Ok(input)
     }
 
-    fn image_dimensions(&mut self, image_path: &String) -> Result<(u32, u32)> {
+    fn image_dimensions(&mut self, image_path: &str) -> Result<(u32, u32)> {
         let input = format!("5;{}\n", image_path);
         let mut process = Popen::create(
             &[&self.path],
@@ -102,7 +102,7 @@ impl ImageDisplay {
         }
 
         let outputs = out.unwrap();
-        let outputs = outputs.trim().split(" ").collect::<Vec<&str>>();
+        let outputs = outputs.trim().split(' ').collect::<Vec<&str>>();
         if outputs.len() < 2 {
             return Err(anyhow!("w3mimagedisplay wrong output"));
         }
@@ -130,7 +130,7 @@ impl ImageDisplay {
         }
 
         let outputs = out.unwrap();
-        let outputs = outputs.trim().split(" ").collect::<Vec<&str>>();
+        let outputs = outputs.trim().split(' ').collect::<Vec<&str>>();
 
         if outputs.len() < 2 {
             return Err(anyhow!("w3mimagedisplay wrong output"));
