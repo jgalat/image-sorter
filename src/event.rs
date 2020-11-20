@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
-use std::{io, sync::mpsc, thread, time::Duration};
+use crossbeam_channel::{unbounded, Receiver};
+use std::{io, thread, time::Duration};
 use termion::{event::Key, input::TermRead};
 
 pub enum Event {
@@ -8,7 +9,7 @@ pub enum Event {
 }
 
 pub struct EventsListener {
-    rx: mpsc::Receiver<Event>,
+    rx: Receiver<Event>,
 }
 
 impl Default for EventsListener {
@@ -19,7 +20,7 @@ impl Default for EventsListener {
 
 impl EventsListener {
     pub fn new(tick_rate: Duration) -> Self {
-        let (tx, rx) = mpsc::channel();
+        let (tx, rx) = unbounded::<Event>();
         let tx_clone = tx.clone();
 
         thread::spawn(move || {
