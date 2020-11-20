@@ -1,5 +1,6 @@
 # image-sorter
 
+![Continuous Integration](https://github.com/jgalat/image-sorter/workflows/Continuous%20Integration/badge.svg)
 [![Crate Status](https://img.shields.io/crates/v/image-sorter.svg)](https://crates.io/crates/image-sorter)
 
 ![Demo](.github/screenshot.jpg)
