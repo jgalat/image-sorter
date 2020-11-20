@@ -118,7 +118,7 @@ fn render_key_mapping(
         .key_mapping
         .iter()
         .map(|(key, path)| Row::Data(vec![key.to_string(), path.clone()].into_iter()));
-    let key_mapping = Table::new(["Key", "Path"].iter(), keys.into_iter())
+    let key_mapping = Table::new(["Key", "Path"].iter(), keys)
         .widths([Constraint::Length(3), Constraint::Length(25)].as_ref())
         .header_gap(0)
         .header_style(Style::default().fg(Color::Red));

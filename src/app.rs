@@ -137,9 +137,14 @@ impl App {
                 for entry in entries {
                     if let Ok(entry) = entry {
                         let path = entry.path();
+
+                        if !App::is_image(&path) {
+                            continue;
+                        }
+
                         let path_str = path.to_str();
-                        if App::is_image(&path) && path_str.is_some() {
-                            images.push(path_str.unwrap().to_string());
+                        if let Some(path_str) = path_str {
+                            images.push(path_str.to_string());
                         }
                     }
                 }
