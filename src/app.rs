@@ -41,10 +41,10 @@ impl App {
         Ok(App {
             tab: 0,
             script_offset: (0, 0),
-            images: images,
             current: 0,
-            key_mapping: key_mapping,
-            actions: actions,
+            images,
+            key_mapping,
+            actions,
             output: opt.output,
         })
     }
