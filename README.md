@@ -50,7 +50,7 @@ image-sorter --help
 Here is an example usage
 
 ```bash 
-image-sorter -b w ~/4/wg -b g ~/4/g -o run.sh -- image.jpg ~/Downloads/
+image-sorter -b w=~/4/wg g=~/4/g -o run.sh -- image.jpg ~/Downloads/
 ```
 
 Running the command above will configure the program like this
