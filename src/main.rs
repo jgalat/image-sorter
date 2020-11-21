@@ -4,9 +4,9 @@ mod image_display;
 mod input;
 mod render;
 
-use anyhow::Result;
-use clap::{App as ClapApp, Arg};
-use std::io;
+use anyhow::{anyhow, Result};
+use std::{io, path::PathBuf};
+use structopt::StructOpt;
 use termion::{event::Key, raw::IntoRawMode, screen::AlternateScreen};
 use tui::{backend::TermionBackend, Terminal};
 
@@ -16,50 +16,47 @@ use crate::image_display::ImageDisplay;
 use crate::input::{handle_key_main, handle_key_script};
 use crate::render::{render_layout, render_main, render_script};
 
+fn parse_key_val(s: &str) -> Result<(char, PathBuf)> {
+    let pos = s
+        .find('=')
+        .ok_or_else(|| anyhow!(format!("invalid KEY=value: no `=` found in `{}`", s)))?;
+    Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
+}
+
+#[derive(Debug, StructOpt)]
+#[structopt(
+    name = env!("CARGO_PKG_NAME"),
+    about = env!("CARGO_PKG_DESCRIPTION"),
+    author = env!("CARGO_PKG_AUTHORS") ,
+    version = env!("CARGO_PKG_VERSION"),
+)]
+pub struct Opt {
+    #[structopt(
+        short,
+        long,
+        help = "Bind a char to a folder, CHAR=FOLDER",
+        parse(try_from_str = parse_key_val),
+    )]
+    bind: Vec<(char, PathBuf)>,
+
+    #[structopt(
+        help = "Images or folders containing images to sort",
+        parse(from_os_str)
+    )]
+    input: Vec<PathBuf>,
+
+    #[structopt(
+        short,
+        long,
+        help = "Name the output script",
+        default_value = "sort.sh"
+    )]
+    output: String,
+}
+
 fn main() -> Result<()> {
-    let matches = ClapApp::new(env!("CARGO_PKG_NAME"))
-        .version(env!("CARGO_PKG_VERSION"))
-        .author(env!("CARGO_PKG_AUTHORS"))
-        .about(env!("CARGO_PKG_DESCRIPTION"))
-        .arg(
-            Arg::with_name("BIND")
-                .help("Bind a char to a folder")
-                .short("b")
-                .long("bind")
-                .takes_value(true)
-                .number_of_values(2)
-                .value_names(&["CHAR", "FOLDER"])
-                .multiple(true),
-        )
-        .arg(
-            Arg::with_name("OUTPUT")
-                .help("Name the output script")
-                .short("o")
-                .long("output")
-                .takes_value(true)
-                .number_of_values(1)
-                .value_names(&["FILE"]),
-        )
-        .arg(
-            Arg::with_name("INPUT")
-                .help("Images or folders containing images to sort")
-                .takes_value(true)
-                .multiple(true)
-                .last(true),
-        )
-        .get_matches();
-
-    let mut app = App::default();
-
-    if let Some(bind_args) = matches.values_of("BIND") {
-        app.parse_key_mapping(bind_args.collect())?;
-    }
-    if let Some(input_args) = matches.values_of("INPUT") {
-        app.parse_input_files(input_args.collect())?;
-    }
-    if let Some(output_arg) = matches.value_of("OUTPUT") {
-        app.output = output_arg.to_string();
-    }
+    let opt = Opt::from_args();
+    let mut app = App::new(opt)?;
 
     let stdout = io::stdout().into_raw_mode()?;
     let stdout = AlternateScreen::from(stdout);

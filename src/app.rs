@@ -1,6 +1,12 @@
 use anyhow::{anyhow, Result};
 use std::io::prelude::*;
-use std::{collections::HashMap, fs::File, path::Path};
+use std::{
+    collections::HashMap,
+    fs::File,
+    path::{Path, PathBuf},
+};
+
+use crate::Opt;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum TabId {
@@ -27,21 +33,22 @@ pub struct App {
     pub output: String,
 }
 
-impl Default for App {
-    fn default() -> Self {
-        App {
+impl App {
+    pub fn new(opt: Opt) -> Result<Self> {
+        let images = App::parse_images(opt.input)?;
+        let (key_mapping, actions) = App::parse_key_mapping(opt.bind)?;
+
+        Ok(App {
             tab: 0,
             script_offset: (0, 0),
-            images: vec![],
+            images: images,
             current: 0,
-            key_mapping: HashMap::new(),
-            actions: vec![],
-            output: "sort.sh".to_string(),
-        }
+            key_mapping: key_mapping,
+            actions: actions,
+            output: opt.output,
+        })
     }
-}
 
-impl App {
     pub fn current_image(&self) -> Option<String> {
         if self.current == self.images.len() {
             return None;
@@ -99,62 +106,6 @@ impl App {
         self.script_offset = (y, x + 1);
     }
 
-    pub fn parse_key_mapping(&mut self, args: Vec<&str>) -> Result<()> {
-        let mut key_mapping = HashMap::new();
-
-        for i in (0..args.len() - 1).step_by(2) {
-            let key = args[i].chars().next().unwrap();
-            let path_str = args[i + 1].to_string();
-            let path = Path::new(&path_str);
-
-            if path.exists() && !path.is_dir() {
-                return Err(anyhow!("{} exists and it's not a directory!", path_str));
-            }
-
-            if !path.exists() && path.to_str().is_some() {
-                self.actions.push(Action::MkDir(path_str.clone()));
-            }
-
-            key_mapping.insert(key, path_str);
-        }
-
-        self.key_mapping = key_mapping;
-        Ok(())
-    }
-
-    pub fn parse_input_files(&mut self, args: Vec<&str>) -> Result<()> {
-        let mut images: Vec<String> = vec![];
-
-        for input in args.iter() {
-            let path = Path::new(input);
-
-            if path.is_file() && App::is_image(&path) {
-                images.push(input.to_string());
-            }
-
-            if path.is_dir() {
-                let entries = path.read_dir()?;
-                for entry in entries {
-                    if let Ok(entry) = entry {
-                        let path = entry.path();
-
-                        if !App::is_image(&path) {
-                            continue;
-                        }
-
-                        let path_str = path.to_str();
-                        if let Some(path_str) = path_str {
-                            images.push(path_str.to_string());
-                        }
-                    }
-                }
-            }
-        }
-
-        self.images = images;
-        Ok(())
-    }
-
     pub fn write(&self) -> Result<()> {
         let mut lines: Vec<String> = vec!["#!/bin/sh".to_string()];
 
@@ -173,6 +124,62 @@ impl App {
         file.write_all(script.as_bytes())?;
 
         Ok(())
+    }
+
+    pub fn parse_key_mapping(
+        args: Vec<(char, PathBuf)>,
+    ) -> Result<(HashMap<char, String>, Vec<Action>)> {
+        let mut key_mapping = HashMap::new();
+        let mut actions = vec![];
+
+        for (key, path) in args.into_iter() {
+            let path = path.as_path();
+            let path_string = path.display().to_string();
+
+            if path.exists() && !path.is_dir() {
+                return Err(anyhow!(
+                    "{} exists and it's not a directory!",
+                    path.display()
+                ));
+            }
+
+            if !path.exists() {
+                actions.push(Action::MkDir(path_string.clone()));
+            }
+
+            key_mapping.insert(key, path_string);
+        }
+
+        Ok((key_mapping, actions))
+    }
+
+    pub fn parse_images(args: Vec<PathBuf>) -> Result<Vec<String>> {
+        let mut images: Vec<String> = vec![];
+
+        for input in args.iter() {
+            let path = input.as_path();
+
+            if path.is_file() && App::is_image(&path) {
+                images.push(path.display().to_string());
+            }
+
+            if path.is_dir() {
+                for entry in path.read_dir()? {
+                    if let Ok(entry) = entry {
+                        let path = entry.path();
+
+                        if !App::is_image(&path) {
+                            continue;
+                        }
+
+                        let path_str = path.display().to_string();
+                        images.push(path_str);
+                    }
+                }
+            }
+        }
+
+        Ok(images)
     }
 
     fn is_image(file: &Path) -> bool {
