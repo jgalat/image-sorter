@@ -33,19 +33,31 @@ pub struct App {
     pub output: String,
 }
 
+impl Default for App {
+    fn default() -> Self {
+        App {
+            tab: 0,
+            script_offset: (0, 0),
+            current: 0,
+            images: vec![],
+            key_mapping: HashMap::new(),
+            actions: vec![],
+            output: "".to_string(),
+        }
+    }
+}
+
 impl App {
     pub fn new(opt: Opt) -> Result<Self> {
         let images = App::parse_images(opt.input)?;
         let (key_mapping, actions) = App::parse_key_mapping(opt.bind)?;
 
         Ok(App {
-            tab: 0,
-            script_offset: (0, 0),
-            current: 0,
             images,
             key_mapping,
             actions,
             output: opt.output,
+            ..App::default()
         })
     }
 
