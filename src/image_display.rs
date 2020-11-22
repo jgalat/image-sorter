@@ -1,5 +1,8 @@
 use anyhow::{anyhow, Result};
-use std::{env, path::Path};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 use subprocess::{Popen, PopenConfig, Redirection};
 use tui::layout::Rect;
 
@@ -39,7 +42,7 @@ impl ImageDisplay {
         }
     }
 
-    pub fn render_image(&mut self, image_path: String, block: Rect, terminal: Rect) -> Result<()> {
+    pub fn render_image(&mut self, image_path: PathBuf, block: Rect, terminal: Rect) -> Result<()> {
         let input = self.w3m_input(image_path, block, terminal)?;
         let mut process = Popen::create(
             &[&self.path],
@@ -54,7 +57,7 @@ impl ImageDisplay {
         Ok(())
     }
 
-    fn w3m_input(&mut self, image_path: String, block: Rect, terminal: Rect) -> Result<String> {
+    fn w3m_input(&mut self, image_path: PathBuf, block: Rect, terminal: Rect) -> Result<String> {
         let (fontw, fonth) = self.font_dimensions(terminal)?;
 
         let start_x = (block.x as u32 + 1) * fontw;
@@ -79,14 +82,18 @@ impl ImageDisplay {
 
         let input = format!(
             "0;1;{};{};{};{};;;;;{}\n4;\n3;\n",
-            start_x, start_y, width, height, image_path
+            start_x,
+            start_y,
+            width,
+            height,
+            image_path.display()
         );
 
         Ok(input)
     }
 
-    fn image_dimensions(&mut self, image_path: &str) -> Result<(u32, u32)> {
-        let input = format!("5;{}\n", image_path);
+    fn image_dimensions(&mut self, image_path: &PathBuf) -> Result<(u32, u32)> {
+        let input = format!("5;{}\n", image_path.display());
         let mut process = Popen::create(
             &[&self.path],
             PopenConfig {

@@ -1,8 +1,6 @@
 use anyhow::Result;
-use std::io;
-use termion::{raw::RawTerminal, screen::AlternateScreen};
 use tui::{
-    backend::{Backend, TermionBackend},
+    backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     terminal::Frame,
@@ -50,7 +48,7 @@ where
 {
     let image_title = match app.current_image() {
         None => "No more images left to sort".to_string(),
-        Some(image_path) => image_path,
+        Some(image_path) => image_path.display().to_string(),
     };
     let image_block = Block::default().borders(Borders::ALL).title(image_title);
     let status_block = Block::default().borders(Borders::ALL).title("Status");
@@ -115,10 +113,9 @@ fn render_key_mapping<B>(f: &mut Frame<B>, app: &App, window: Rect)
 where
     B: Backend,
 {
-    let keys = app
-        .key_mapping
-        .iter()
-        .map(|(key, path)| Row::Data(vec![key.to_string(), path.clone()].into_iter()));
+    let keys = app.key_mapping.iter().map(|(key, path)| {
+        Row::Data(vec![key.to_string(), path.display().to_string()].into_iter())
+    });
     let key_mapping = Table::new(["Key", "Path"].iter(), keys)
         .widths([Constraint::Length(3), Constraint::Length(25)].as_ref())
         .header_gap(0)
@@ -172,11 +169,16 @@ where
 
     for action in app.actions.iter() {
         match action {
-            Action::Skip(image) => {
-                lines.push(Span::styled(format!("# Skipped {}", image), comment_style))
-            }
-            Action::Move(image, path) => lines.push(Span::from(format!("mv {} {}", image, path))),
-            Action::MkDir(path) => lines.push(Span::from(format!("mkdir -p {}", path))),
+            Action::Skip(image) => lines.push(Span::styled(
+                format!("# Skipped {}", image.display()),
+                comment_style,
+            )),
+            Action::Move(image, path) => lines.push(Span::from(format!(
+                "mv {} {}",
+                image.display(),
+                path.display()
+            ))),
+            Action::MkDir(path) => lines.push(Span::from(format!("mkdir -p {}", path.display()))),
         }
     }
 
