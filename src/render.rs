@@ -2,7 +2,7 @@ use anyhow::Result;
 use std::io;
 use termion::{raw::RawTerminal, screen::AlternateScreen};
 use tui::{
-    backend::TermionBackend,
+    backend::{Backend, TermionBackend},
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     terminal::Frame,
@@ -13,10 +13,10 @@ use tui::{
 use crate::app::{Action, App};
 use crate::image_display::ImageDisplay;
 
-pub fn render_layout(
-    f: &mut Frame<TermionBackend<AlternateScreen<RawTerminal<io::Stdout>>>>,
-    app: &App,
-) -> Rect {
+pub fn render_layout<B>(f: &mut Frame<B>, app: &App) -> Rect
+where
+    B: Backend,
+{
     let window = f.size();
     let layout = Layout::default()
         .direction(Direction::Vertical)
@@ -39,12 +39,15 @@ pub fn render_layout(
     layout[1]
 }
 
-pub fn render_main(
-    f: &mut Frame<TermionBackend<AlternateScreen<RawTerminal<io::Stdout>>>>,
+pub fn render_main<B>(
+    f: &mut Frame<B>,
     app: &App,
     image_display: &mut ImageDisplay,
     window: Rect,
-) -> Result<()> {
+) -> Result<()>
+where
+    B: Backend,
+{
     let image_title = match app.current_image() {
         None => "No more images left to sort".to_string(),
         Some(image_path) => image_path,
@@ -99,21 +102,19 @@ pub fn render_main(
     Ok(())
 }
 
-fn render_status(
-    f: &mut Frame<TermionBackend<AlternateScreen<RawTerminal<io::Stdout>>>>,
-    app: &App,
-    window: Rect,
-) {
+fn render_status<B>(f: &mut Frame<B>, app: &App, window: Rect)
+where
+    B: Backend,
+{
     let status = Text::from(format!("Sorted: {}/{}", app.current, app.images.len()));
     let paragraph = Paragraph::new(status).alignment(Alignment::Center);
     f.render_widget(paragraph, window);
 }
 
-fn render_key_mapping(
-    f: &mut Frame<TermionBackend<AlternateScreen<RawTerminal<io::Stdout>>>>,
-    app: &App,
-    window: Rect,
-) {
+fn render_key_mapping<B>(f: &mut Frame<B>, app: &App, window: Rect)
+where
+    B: Backend,
+{
     let keys = app
         .key_mapping
         .iter()
@@ -126,10 +127,10 @@ fn render_key_mapping(
     f.render_widget(key_mapping, window);
 }
 
-fn render_controls(
-    f: &mut Frame<TermionBackend<AlternateScreen<RawTerminal<io::Stdout>>>>,
-    window: Rect,
-) {
+fn render_controls<B>(f: &mut Frame<B>, window: Rect)
+where
+    B: Backend,
+{
     let controls = Table::new(
         ["Key", "Action"].iter(),
         vec![
@@ -149,11 +150,10 @@ fn render_controls(
     f.render_widget(controls, window);
 }
 
-pub fn render_script(
-    f: &mut Frame<TermionBackend<AlternateScreen<RawTerminal<io::Stdout>>>>,
-    app: &App,
-    window: Rect,
-) -> Result<()> {
+pub fn render_script<B>(f: &mut Frame<B>, app: &App, window: Rect) -> Result<()>
+where
+    B: Backend,
+{
     let comment_style = Style::default().fg(Color::Yellow);
     let mut lines = vec![
         Span::styled("#!/bin/sh", comment_style),
