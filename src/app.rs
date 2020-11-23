@@ -163,10 +163,12 @@ impl App {
 
         for action in self.actions.iter() {
             match action {
-                Action::MkDir(folder) => lines.push(format!("mkdir -p {}", folder.display())),
-                Action::Move(image_path, folder) => {
-                    lines.push(format!("mv {} {}", image_path.display(), folder.display()))
-                }
+                Action::MkDir(folder) => lines.push(format!("mkdir -p \"{}\"", folder.display())),
+                Action::Move(image_path, folder) => lines.push(format!(
+                    "mv \"{}\" \"{}\"",
+                    image_path.display(),
+                    folder.display()
+                )),
                 _ => {}
             }
         }

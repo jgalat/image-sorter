@@ -208,25 +208,24 @@ where
                 format!("# Skipped {}", image.display()),
                 comment_style,
             )),
+            Action::MkDir(path) => {
+                lines.push(Span::from(format!("mkdir -p \"{}\"", path.display())))
+            }
             Action::Move(image, path) => lines.push(Span::from(format!(
-                "mv {} {}",
+                "mv \"{}\" \"{}\"",
                 image.display(),
                 path.display()
             ))),
-            Action::MkDir(path) => lines.push(Span::from(format!("mkdir -p {}", path.display()))),
             _ => {}
         }
     }
 
     let lines: Vec<Spans> = lines.into_iter().map(Spans::from).collect();
-
     let script_block = Block::default().borders(Borders::ALL);
-
     let paragraph = Paragraph::new(lines)
         .block(script_block)
         .scroll(app.script_offset);
 
     f.render_widget(paragraph, window);
-
     Ok(())
 }
