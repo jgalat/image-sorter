@@ -4,6 +4,7 @@ use std::{
     collections::HashMap,
     fs::File,
     path::{Path, PathBuf},
+    time::Instant,
 };
 
 use crate::Opt;
@@ -48,6 +49,7 @@ pub struct App {
     pub enable_input: bool,
     pub input: Vec<char>,
     pub input_idx: usize,
+    pub last_save: Option<Instant>,
 }
 
 impl Default for App {
@@ -63,6 +65,7 @@ impl Default for App {
             enable_input: false,
             input: vec![],
             input_idx: 0,
+            last_save: None,
         }
     }
 }
@@ -155,7 +158,7 @@ impl App {
         }
     }
 
-    pub fn write(&self) -> Result<()> {
+    pub fn write(&mut self) -> Result<()> {
         let mut lines: Vec<String> = vec!["#!/bin/sh".to_string()];
 
         for action in self.actions.iter() {
@@ -172,6 +175,7 @@ impl App {
         let mut file = File::create(&self.output)?;
         file.write_all(script.as_bytes())?;
 
+        self.last_save = Some(Instant::now());
         Ok(())
     }
 

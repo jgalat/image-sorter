@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::time::Duration;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -119,13 +120,20 @@ where
     f.render_widget(paragraph, window);
 }
 
+const STATUS_DURATION: Duration = Duration::from_secs(2);
+
 fn render_status<B>(f: &mut Frame<B>, app: &App, window: Rect)
 where
     B: Backend,
 {
     let status_block = Block::default().borders(Borders::ALL).title("Status");
-    let status = Text::from(format!("Sorted: {}/{}", app.current, app.images.len()));
-    let paragraph = Paragraph::new(status)
+    let mut status = format!("Sorted: {}/{}", app.current, app.images.len());
+    if let Some(last_save) = app.last_save {
+        if last_save.elapsed() < STATUS_DURATION {
+            status = format!("Script saved!");
+        }
+    }
+    let paragraph = Paragraph::new(Text::from(status))
         .alignment(Alignment::Center)
         .block(status_block);
     f.render_widget(paragraph, window);
