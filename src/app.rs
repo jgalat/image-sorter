@@ -26,10 +26,7 @@ pub enum Action {
 
 impl Action {
     pub fn is_poppable(&self) -> bool {
-        match self {
-            Action::MkDir(_) => false,
-            _ => true,
-        }
+        !matches!(self, Action::MkDir(_))
     }
 
     pub fn queue_step(&self) -> usize {
