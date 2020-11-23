@@ -47,7 +47,14 @@ where
 {
     let image_title = match app.current_image() {
         None => "No more images left to sort".to_string(),
-        Some(image_path) => image_path.display().to_string(),
+        Some(image_path) => {
+            let image_path = image_path.display().to_string();
+            if let Some(Action::Rename(name)) = app.actions.last() {
+                format!("{} - Renamed to {}", image_path, name)
+            } else {
+                image_path
+            }
+        }
     };
     let image_block = Block::default().borders(Borders::ALL).title(image_title);
 
@@ -72,8 +79,8 @@ where
         .constraints(
             [
                 Constraint::Length(3),
-                Constraint::Min(3),
-                Constraint::Length(9),
+                Constraint::Min(5),
+                Constraint::Length(10),
             ]
             .as_ref(),
         )
@@ -152,6 +159,7 @@ where
             Row::Data(["Ctrl-C", "Exit"].iter()),
             Row::Data(["Tab", "Switch tabs"].iter()),
             Row::Data(["", ""].iter()),
+            Row::Data(["Ctrl-R", "Rename image"].iter()),
             Row::Data(["Ctrl-S", "Skip image"].iter()),
             Row::Data(["Ctrl-Z", "Undo action"].iter()),
             Row::Data(["Ctrl-W", "Save script"].iter()),
@@ -198,6 +206,7 @@ where
                 path.display()
             ))),
             Action::MkDir(path) => lines.push(Span::from(format!("mkdir -p {}", path.display()))),
+            _ => {}
         }
     }
 

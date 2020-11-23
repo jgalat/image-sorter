@@ -7,13 +7,13 @@ mod render;
 use anyhow::{anyhow, Result};
 use std::{io, path::PathBuf};
 use structopt::StructOpt;
-use termion::{event::Key, raw::IntoRawMode, screen::AlternateScreen};
+use termion::{cursor::Goto, event::Key, raw::IntoRawMode, screen::AlternateScreen};
 use tui::{backend::TermionBackend, Terminal};
 
 use crate::app::{App, TabId};
 use crate::event::{Event, EventsListener};
 use crate::image_display::ImageDisplay;
-use crate::input::{handle_key_main, handle_key_script};
+use crate::input::{handle_key_input, handle_key_main, handle_key_script};
 use crate::render::{render_layout, render_main, render_script};
 
 fn parse_key_val(s: &str) -> Result<(char, PathBuf)> {
@@ -79,8 +79,9 @@ fn main() -> Result<()> {
         })?;
 
         if app.enable_input {
-            // put cursor back in the box...
             terminal.show_cursor()?;
+            let size = terminal.size()?;
+            print!("{}", Goto(app.input_idx as u16 + 2, size.height - 1))
         } else {
             terminal.hide_cursor()?;
         }
@@ -93,12 +94,12 @@ fn main() -> Result<()> {
                 }
 
                 if app.enable_input {
-                    /* something with the keys... like writing... */
+                    handle_key_input(key, &mut app);
                 } else {
                     // App controls
                     match key {
                         Key::Ctrl('w') => app.write()?,
-                        Key::Ctrl('r') => app.enable_input = true,
+                        Key::Ctrl('r') => app.rename_current_image(),
                         Key::Char('\t') => app.switch_tab(),
                         _ => match app.current_tab() {
                             TabId::Main => handle_key_main(key, &mut app),

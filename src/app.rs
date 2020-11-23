@@ -16,11 +16,28 @@ pub enum TabId {
 
 const TABS: [TabId; 2] = [TabId::Main, TabId::Script];
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum Action {
     Skip(PathBuf),
     Move(PathBuf, PathBuf),
+    Rename(String),
     MkDir(PathBuf),
+}
+
+impl Action {
+    pub fn is_poppable(&self) -> bool {
+        match self {
+            Action::MkDir(_) => false,
+            _ => true,
+        }
+    }
+
+    pub fn queue_step(&self) -> usize {
+        match self {
+            Action::Skip(_) | Action::Move(_, _) => 1,
+            _ => 0,
+        }
+    }
 }
 
 pub struct App {
@@ -76,17 +93,23 @@ impl App {
     }
 
     pub fn pop_action(&mut self) {
-        if self.current > 0 {
-            self.actions.pop();
-            self.current -= 1;
+        let last_action = self.actions.last().cloned();
+
+        if let Some(last_action) = last_action {
+            if last_action.is_poppable() {
+                self.actions.pop();
+            }
+            self.current -= last_action.queue_step();
         }
     }
 
     pub fn push_action(&mut self, action: Action) {
-        if self.current < self.images.len() {
-            self.actions.push(action);
-            self.current += 1;
+        if self.current == self.images.len() {
+            return;
         }
+
+        self.current += action.queue_step();
+        self.actions.push(action);
     }
 
     pub fn current_tab(&self) -> TabId {
@@ -122,6 +145,17 @@ impl App {
     pub fn scroll_right(&mut self) {
         let (y, x) = self.script_offset;
         self.script_offset = (y, x + 1);
+    }
+
+    pub fn rename_current_image(&mut self) {
+        if let Some(current_image) = self.current_image() {
+            if let Some(name) = current_image.file_name() {
+                let name: Vec<char> = name.to_str().unwrap().chars().collect();
+                self.input_idx = name.len();
+                self.input = name;
+                self.enable_input = true;
+            }
+        }
     }
 
     pub fn write(&self) -> Result<()> {

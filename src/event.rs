@@ -14,7 +14,7 @@ pub struct EventsListener {
 
 impl Default for EventsListener {
     fn default() -> Self {
-        EventsListener::new(Duration::from_millis(500))
+        EventsListener::new(Duration::from_millis(250))
     }
 }
 
