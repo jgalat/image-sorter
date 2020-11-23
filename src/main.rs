@@ -62,7 +62,6 @@ fn main() -> Result<()> {
     let stdout = AlternateScreen::from(stdout);
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    terminal.hide_cursor()?;
 
     let events_listener = EventsListener::default();
     let mut image_display = ImageDisplay::new()?;
@@ -79,15 +78,35 @@ fn main() -> Result<()> {
             }
         })?;
 
+        if app.enable_input {
+            // put cursor back in the box...
+            terminal.show_cursor()?;
+        } else {
+            terminal.hide_cursor()?;
+        }
+
         match events_listener.next()? {
             Event::Tick => continue,
-            Event::Input(Key::Ctrl('c')) => break,
-            Event::Input(Key::Ctrl('w')) => app.write()?,
-            Event::Input(Key::BackTab) => app.switch_tab(),
-            Event::Input(key) => match app.current_tab() {
-                TabId::Main => handle_key_main(key, &mut app),
-                TabId::Script => handle_key_script(key, &mut app),
-            },
+            Event::Input(key) => {
+                if key == Key::Ctrl('c') {
+                    break;
+                }
+
+                if app.enable_input {
+                    /* something with the keys... like writing... */
+                } else {
+                    // App controls
+                    match key {
+                        Key::Ctrl('w') => app.write()?,
+                        Key::Ctrl('r') => app.enable_input = true,
+                        Key::Char('\t') => app.switch_tab(),
+                        _ => match app.current_tab() {
+                            TabId::Main => handle_key_main(key, &mut app),
+                            TabId::Script => handle_key_script(key, &mut app),
+                        },
+                    }
+                }
+            }
         }
     }
 

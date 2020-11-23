@@ -31,6 +31,9 @@ pub struct App {
     pub key_mapping: HashMap<char, PathBuf>,
     pub actions: Vec<Action>,
     pub output: String,
+    pub enable_input: bool,
+    pub input: Vec<char>,
+    pub input_idx: usize,
 }
 
 impl Default for App {
@@ -43,6 +46,9 @@ impl Default for App {
             key_mapping: HashMap::new(),
             actions: vec![],
             output: "".to_string(),
+            enable_input: false,
+            input: vec![],
+            input_idx: 0,
         }
     }
 }
