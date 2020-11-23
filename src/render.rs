@@ -130,7 +130,7 @@ where
     let mut status = format!("Sorted: {}/{}", app.current, app.images.len());
     if let Some(last_save) = app.last_save {
         if last_save.elapsed() < STATUS_DURATION {
-            status = format!("Script saved!");
+            status = "Script saved!".to_string();
         }
     }
     let paragraph = Paragraph::new(Text::from(status))

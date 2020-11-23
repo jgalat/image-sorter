@@ -5,7 +5,7 @@ mod input;
 mod render;
 
 use anyhow::{anyhow, Result};
-use std::{io, path::PathBuf};
+use std::{io, path::PathBuf, time::Duration};
 use structopt::StructOpt;
 use termion::{cursor::Goto, event::Key, raw::IntoRawMode, screen::AlternateScreen};
 use tui::{backend::TermionBackend, Terminal};
@@ -52,10 +52,14 @@ pub struct Opt {
         default_value = "sort.sh"
     )]
     output: String,
+
+    #[structopt(short, long, help = "App tick rate (ms)", default_value = "1000")]
+    tick_rate: u64,
 }
 
 fn main() -> Result<()> {
     let opt = Opt::from_args();
+    let events_listener = EventsListener::new(Duration::from_millis(opt.tick_rate));
     let mut app = App::new(opt)?;
 
     let stdout = io::stdout().into_raw_mode()?;
@@ -63,7 +67,6 @@ fn main() -> Result<()> {
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let events_listener = EventsListener::default();
     let mut image_display = ImageDisplay::new()?;
 
     loop {
