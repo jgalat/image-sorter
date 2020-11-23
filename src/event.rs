@@ -12,12 +12,6 @@ pub struct EventsListener {
     rx: Receiver<Event>,
 }
 
-impl Default for EventsListener {
-    fn default() -> Self {
-        EventsListener::new(Duration::from_millis(500))
-    }
-}
-
 impl EventsListener {
     pub fn new(tick_rate: Duration) -> Self {
         let (tx, rx) = unbounded::<Event>();

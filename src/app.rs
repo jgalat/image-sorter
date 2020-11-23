@@ -4,6 +4,7 @@ use std::{
     collections::HashMap,
     fs::File,
     path::{Path, PathBuf},
+    time::Instant,
 };
 
 use crate::Opt;
@@ -16,21 +17,57 @@ pub enum TabId {
 
 const TABS: [TabId; 2] = [TabId::Main, TabId::Script];
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum Action {
-    Skip(String),
-    Move(String, String),
-    MkDir(String),
+    Skip(PathBuf),
+    Move(PathBuf, PathBuf),
+    Rename(String),
+    MkDir(PathBuf),
+}
+
+impl Action {
+    pub fn is_poppable(&self) -> bool {
+        !matches!(self, Action::MkDir(_))
+    }
+
+    pub fn queue_step(&self) -> usize {
+        match self {
+            Action::Skip(_) | Action::Move(_, _) => 1,
+            _ => 0,
+        }
+    }
 }
 
 pub struct App {
     pub tab: usize,
     pub script_offset: (u16, u16),
-    pub images: Vec<String>,
+    pub images: Vec<PathBuf>,
     pub current: usize,
-    pub key_mapping: HashMap<char, String>,
+    pub key_mapping: HashMap<char, PathBuf>,
     pub actions: Vec<Action>,
     pub output: String,
+    pub enable_input: bool,
+    pub input: Vec<char>,
+    pub input_idx: usize,
+    pub last_save: Option<Instant>,
+}
+
+impl Default for App {
+    fn default() -> Self {
+        App {
+            tab: 0,
+            script_offset: (0, 0),
+            current: 0,
+            images: vec![],
+            key_mapping: HashMap::new(),
+            actions: vec![],
+            output: "".to_string(),
+            enable_input: false,
+            input: vec![],
+            input_idx: 0,
+            last_save: None,
+        }
+    }
 }
 
 impl App {
@@ -39,17 +76,15 @@ impl App {
         let (key_mapping, actions) = App::parse_key_mapping(opt.bind)?;
 
         Ok(App {
-            tab: 0,
-            script_offset: (0, 0),
-            current: 0,
             images,
             key_mapping,
             actions,
             output: opt.output,
+            ..App::default()
         })
     }
 
-    pub fn current_image(&self) -> Option<String> {
+    pub fn current_image(&self) -> Option<PathBuf> {
         if self.current == self.images.len() {
             return None;
         }
@@ -58,17 +93,23 @@ impl App {
     }
 
     pub fn pop_action(&mut self) {
-        if self.current > 0 {
-            self.actions.pop();
-            self.current -= 1;
+        let last_action = self.actions.last().cloned();
+
+        if let Some(last_action) = last_action {
+            if last_action.is_poppable() {
+                self.actions.pop();
+            }
+            self.current -= last_action.queue_step();
         }
     }
 
     pub fn push_action(&mut self, action: Action) {
-        if self.current < self.images.len() {
-            self.actions.push(action);
-            self.current += 1;
+        if self.current == self.images.len() {
+            return;
         }
+
+        self.current += action.queue_step();
+        self.actions.push(action);
     }
 
     pub fn current_tab(&self) -> TabId {
@@ -106,15 +147,28 @@ impl App {
         self.script_offset = (y, x + 1);
     }
 
-    pub fn write(&self) -> Result<()> {
+    pub fn rename_current_image(&mut self) {
+        if let Some(current_image) = self.current_image() {
+            if let Some(name) = current_image.file_name() {
+                let name: Vec<char> = name.to_str().unwrap().chars().collect();
+                self.input_idx = name.len();
+                self.input = name;
+                self.enable_input = true;
+            }
+        }
+    }
+
+    pub fn write(&mut self) -> Result<()> {
         let mut lines: Vec<String> = vec!["#!/bin/sh".to_string()];
 
         for action in self.actions.iter() {
             match action {
-                Action::MkDir(folder) => lines.push(format!("mkdir -p {}", folder)),
-                Action::Move(image_path, folder) => {
-                    lines.push(format!("mv {} {}", image_path, folder))
-                }
+                Action::MkDir(folder) => lines.push(format!("mkdir -p \"{}\"", folder.display())),
+                Action::Move(image_path, folder) => lines.push(format!(
+                    "mv \"{}\" \"{}\"",
+                    image_path.display(),
+                    folder.display()
+                )),
                 _ => {}
             }
         }
@@ -123,18 +177,18 @@ impl App {
         let mut file = File::create(&self.output)?;
         file.write_all(script.as_bytes())?;
 
+        self.last_save = Some(Instant::now());
         Ok(())
     }
 
     pub fn parse_key_mapping(
         args: Vec<(char, PathBuf)>,
-    ) -> Result<(HashMap<char, String>, Vec<Action>)> {
+    ) -> Result<(HashMap<char, PathBuf>, Vec<Action>)> {
         let mut key_mapping = HashMap::new();
         let mut actions = vec![];
 
-        for (key, path) in args.into_iter() {
-            let path = path.as_path();
-            let path_string = path.display().to_string();
+        for (key, path_buf) in args.into_iter() {
+            let path = path_buf.as_path();
 
             if path.exists() && !path.is_dir() {
                 return Err(anyhow!(
@@ -144,23 +198,23 @@ impl App {
             }
 
             if !path.exists() {
-                actions.push(Action::MkDir(path_string.clone()));
+                actions.push(Action::MkDir(path_buf.clone()));
             }
 
-            key_mapping.insert(key, path_string);
+            key_mapping.insert(key, path_buf);
         }
 
         Ok((key_mapping, actions))
     }
 
-    pub fn parse_images(args: Vec<PathBuf>) -> Result<Vec<String>> {
-        let mut images: Vec<String> = vec![];
+    pub fn parse_images(args: Vec<PathBuf>) -> Result<Vec<PathBuf>> {
+        let mut images: Vec<PathBuf> = vec![];
 
-        for input in args.iter() {
+        for input in args.into_iter() {
             let path = input.as_path();
 
             if path.is_file() && App::is_image(&path) {
-                images.push(path.display().to_string());
+                images.push(input.clone());
             }
 
             if path.is_dir() {
@@ -168,12 +222,11 @@ impl App {
                     if let Ok(entry) = entry {
                         let path = entry.path();
 
-                        if !App::is_image(&path) {
+                        if !App::is_image(path.as_path()) {
                             continue;
                         }
 
-                        let path_str = path.display().to_string();
-                        images.push(path_str);
+                        images.push(path);
                     }
                 }
             }
