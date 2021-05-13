@@ -19,10 +19,8 @@ impl EventsListener {
 
         thread::spawn(move || {
             let stdin = io::stdin();
-            for evt in stdin.keys() {
-                if let Ok(key) = evt {
-                    tx.send(Event::Input(key)).unwrap();
-                }
+            for key in stdin.keys().flatten() {
+                tx.send(Event::Input(key)).unwrap();
             }
         });
         thread::spawn(move || loop {

@@ -77,7 +77,7 @@ fn main() -> Result<()> {
                 TabId::Script => render_script(&mut f, &app, window),
             } {
                 eprintln!("ERROR: {:?}", err);
-                panic!(err);
+                panic!("{}", err);
             }
         })?;
 
