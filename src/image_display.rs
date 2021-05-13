@@ -92,7 +92,7 @@ impl ImageDisplay {
         Ok(input)
     }
 
-    fn image_dimensions(&mut self, image_path: &PathBuf) -> Result<(u32, u32)> {
+    fn image_dimensions(&mut self, image_path: &Path) -> Result<(u32, u32)> {
         let input = format!("5;{}\n", image_path.display());
         let mut process = Popen::create(
             &[&self.path],

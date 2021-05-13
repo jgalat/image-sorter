@@ -218,16 +218,14 @@ impl App {
             }
 
             if path.is_dir() {
-                for entry in path.read_dir()? {
-                    if let Ok(entry) = entry {
-                        let path = entry.path();
+                for entry in path.read_dir()?.flatten() {
+                    let path = entry.path();
 
-                        if !App::is_image(path.as_path()) {
-                            continue;
-                        }
-
-                        images.push(path);
+                    if !App::is_image(path.as_path()) {
+                        continue;
                     }
+
+                    images.push(path);
                 }
             }
         }
@@ -237,15 +235,8 @@ impl App {
 
     fn is_image(file: &Path) -> bool {
         let image_exts = ["jpeg", "jpg", "png"];
-
-        for ext in image_exts.iter() {
-            if let Some(file_ext) = file.extension() {
-                if file_ext.to_str() == Some(ext) {
-                    return true;
-                }
-            }
-        }
-
-        false
+        file.extension().map_or(false, |f| {
+            image_exts.iter().any(|ext| f.to_str() == Some(ext))
+        })
     }
 }

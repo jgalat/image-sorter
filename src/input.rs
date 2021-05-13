@@ -92,7 +92,7 @@ pub fn handle_key_input(key: Key, app: &mut App) {
         }
         Key::Char('\n') => {
             let input_str: String = app.input.iter().collect();
-            app.actions.push(Action::Rename(input_str));
+            app.push_action(Action::Rename(input_str));
             app.enable_input = false;
         }
         Key::Backspace | Key::Ctrl('h') => {
