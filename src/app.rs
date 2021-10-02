@@ -213,7 +213,7 @@ impl App {
         for input in args.into_iter() {
             let path = input.as_path();
 
-            if path.is_file() && App::is_image(&path) {
+            if path.is_file() && App::is_image(path) {
                 images.push(input.clone());
             }
 
