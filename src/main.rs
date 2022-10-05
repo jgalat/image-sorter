@@ -70,11 +70,11 @@ fn main() -> Result<()> {
     let mut image_display = ImageDisplay::new()?;
 
     loop {
-        terminal.draw(|mut f| {
-            let window = render_layout(&mut f, &app);
+        terminal.draw(|f| {
+            let window = render_layout(f, &app);
             if let Err(err) = match app.current_tab() {
-                TabId::Main => render_main(&mut f, &app, &mut image_display, window),
-                TabId::Script => render_script(&mut f, &app, window),
+                TabId::Main => render_main(f, &app, &mut image_display, window),
+                TabId::Script => render_script(f, &app, window),
             } {
                 eprintln!("ERROR: {:?}", err);
                 panic!("{}", err);
