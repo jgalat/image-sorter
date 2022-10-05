@@ -9,7 +9,7 @@ use std::{
 
 use crate::Opt;
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub enum TabId {
     Main,
     Script,
@@ -17,7 +17,7 @@ pub enum TabId {
 
 const TABS: [TabId; 2] = [TabId::Main, TabId::Script];
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum Action {
     Skip(PathBuf),
     Move(PathBuf, PathBuf),
