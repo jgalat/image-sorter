@@ -5,10 +5,10 @@ mod input;
 mod render;
 
 use anyhow::{anyhow, Result};
+use ratatui::{backend::TermionBackend, Terminal};
 use std::{io, path::PathBuf, time::Duration};
 use structopt::StructOpt;
-use termion::{cursor::Goto, event::Key, raw::IntoRawMode, screen::AlternateScreen};
-use tui::{backend::TermionBackend, Terminal};
+use termion::{cursor::Goto, event::Key, raw::IntoRawMode, screen::IntoAlternateScreen};
 
 use crate::app::{App, TabId};
 use crate::event::{Event, EventsListener};
@@ -63,7 +63,7 @@ fn main() -> Result<()> {
     let mut app = App::new(opt)?;
 
     let stdout = io::stdout().into_raw_mode()?;
-    let stdout = AlternateScreen::from(stdout);
+    let stdout = stdout.into_alternate_screen()?;
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
