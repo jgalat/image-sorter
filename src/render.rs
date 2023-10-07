@@ -1,13 +1,13 @@
 use anyhow::Result;
-use std::time::Duration;
-use tui::{
+use ratatui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     terminal::Frame,
-    text::{Span, Spans, Text},
+    text::{Line, Text},
     widgets::{Block, Borders, Paragraph, Row, Table, Tabs},
 };
+use std::time::Duration;
 
 use crate::app::{Action, App};
 use crate::image_display::ImageDisplay;
@@ -22,11 +22,7 @@ where
         .constraints([Constraint::Length(3), Constraint::Min(5)].as_ref())
         .split(window);
 
-    let titles = ["Main", "Script"]
-        .iter()
-        .cloned()
-        .map(Spans::from)
-        .collect();
+    let titles = ["Main", "Script"].iter().cloned().map(Line::from).collect();
 
     let tabs = Tabs::new(titles)
         .block(Block::default().title("image-sorter").borders(Borders::ALL))
@@ -144,13 +140,14 @@ where
     B: Backend,
 {
     let key_mapping_block = Block::default().borders(Borders::ALL).title("Key mapping");
-    let keys = app.key_mapping.iter().map(|(key, path)| {
-        Row::Data(vec![key.to_string(), path.display().to_string()].into_iter())
-    });
-    let key_mapping = Table::new(["Key", "Path"].iter(), keys)
+    let keys = app
+        .key_mapping
+        .iter()
+        .map(|(key, path)| Row::new(vec![key.to_string(), path.display().to_string()]));
+
+    let key_mapping = Table::new(keys)
         .widths([Constraint::Length(3), Constraint::Length(25)].as_ref())
-        .header_gap(0)
-        .header_style(Style::default().fg(Color::Red))
+        .header(Row::new(["Key", "Path"]).style(Style::default().fg(Color::Red)))
         .block(key_mapping_block);
 
     f.render_widget(key_mapping, window);
@@ -161,22 +158,17 @@ where
     B: Backend,
 {
     let controls_block = Block::default().borders(Borders::ALL).title("Controls");
-    let controls = Table::new(
-        ["Key", "Action"].iter(),
-        vec![
-            Row::Data(["Ctrl-C", "Exit"].iter()),
-            Row::Data(["Tab", "Switch tabs"].iter()),
-            Row::Data(["", ""].iter()),
-            Row::Data(["Ctrl-R", "Rename image"].iter()),
-            Row::Data(["Ctrl-S", "Skip image"].iter()),
-            Row::Data(["Ctrl-Z", "Undo action"].iter()),
-            Row::Data(["Ctrl-W", "Save script"].iter()),
-        ]
-        .into_iter(),
-    )
+    let controls = Table::new(vec![
+        Row::new(["Ctrl-C", "Exit"]),
+        Row::new(["Tab", "Switch tabs"]),
+        Row::new(["", ""]),
+        Row::new(["Ctrl-R", "Rename image"]),
+        Row::new(["Ctrl-S", "Skip image"]),
+        Row::new(["Ctrl-Z", "Undo action"]),
+        Row::new(["Ctrl-W", "Save script"]),
+    ])
     .widths([Constraint::Length(10), Constraint::Length(20)].as_ref())
-    .header_gap(0)
-    .header_style(Style::default().fg(Color::Red))
+    .header(Row::new(["Key", "Action"]).style(Style::default().fg(Color::Red)))
     .block(controls_block);
 
     f.render_widget(controls, window);
@@ -188,15 +180,15 @@ where
 {
     let comment_style = Style::default().fg(Color::Yellow);
     let mut lines = vec![
-        Span::styled("#!/bin/sh", comment_style),
-        Span::styled(
+        Line::styled("#!/bin/sh", comment_style),
+        Line::styled(
             format!(
                 "# Press Ctrl+W to save the following script to {}",
                 app.output
             ),
             comment_style,
         ),
-        Span::styled(
+        Line::styled(
             "# Use the arrows keys (or h j k l) to scroll",
             comment_style,
         ),
@@ -204,14 +196,14 @@ where
 
     for action in app.actions.iter() {
         match action {
-            Action::Skip(image) => lines.push(Span::styled(
+            Action::Skip(image) => lines.push(Line::styled(
                 format!("# Skipped {}", image.display()),
                 comment_style,
             )),
             Action::MkDir(path) => {
-                lines.push(Span::from(format!("mkdir -p \"{}\"", path.display())))
+                lines.push(Line::from(format!("mkdir -p \"{}\"", path.display())))
             }
-            Action::Move(image, path) => lines.push(Span::from(format!(
+            Action::Move(image, path) => lines.push(Line::from(format!(
                 "mv \"{}\" \"{}\"",
                 image.display(),
                 path.display()
@@ -220,7 +212,7 @@ where
         }
     }
 
-    let lines: Vec<Spans> = lines.into_iter().map(Spans::from).collect();
+    let lines: Vec<Line> = lines.into_iter().map(Line::from).collect();
     let script_block = Block::default().borders(Borders::ALL);
     let paragraph = Paragraph::new(lines)
         .block(script_block)

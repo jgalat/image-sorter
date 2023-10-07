@@ -1,10 +1,10 @@
 use anyhow::{anyhow, Result};
+use ratatui::layout::Rect;
 use std::{
     env,
     path::{Path, PathBuf},
 };
 use subprocess::{Popen, PopenConfig, Redirection};
-use tui::layout::Rect;
 
 pub struct ImageDisplay {
     path: String,
