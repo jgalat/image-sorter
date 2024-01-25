@@ -68,7 +68,7 @@ where
 
     let main_layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(main_layout_constraints.as_ref())
+        .constraints(main_layout_constraints)
         .split(window_layout[0]);
 
     let sidebar_layout = Layout::default()
