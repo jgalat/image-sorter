@@ -9,6 +9,7 @@ use ratatui::{backend::TermionBackend, Terminal};
 use std::{io, path::PathBuf, time::Duration};
 use structopt::StructOpt;
 use termion::{cursor::Goto, event::Key, raw::IntoRawMode, screen::IntoAlternateScreen};
+use expanduser::expanduser;
 
 use crate::app::{App, TabId};
 use crate::event::{Event, EventsListener};
@@ -20,7 +21,8 @@ fn parse_key_val(s: &str) -> Result<(char, PathBuf)> {
     let pos = s
         .find('=')
         .ok_or_else(|| anyhow!(format!("invalid KEY=value: no `=` found in `{}`", s)))?;
-    Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
+    let dir: String = s[pos + 1..].parse()?;
+    Ok((s[..pos].parse()?, expanduser(dir)?))
 }
 
 #[derive(Debug, StructOpt)]
