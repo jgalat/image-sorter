@@ -77,7 +77,7 @@ where
             [
                 Constraint::Length(3),
                 Constraint::Min(5),
-                Constraint::Length(10),
+                Constraint::Length(11),
             ]
             .as_ref(),
         )
@@ -164,6 +164,7 @@ where
         Row::new(["", ""]),
         Row::new(["Ctrl-R", "Rename image"]),
         Row::new(["Ctrl-S", "Skip image"]),
+        Row::new(["Backspace", "Delete image"]),
         Row::new(["Ctrl-Z", "Undo action"]),
         Row::new(["Ctrl-W", "Save script"]),
     ])
@@ -208,6 +209,7 @@ where
                 image.display(),
                 path.display()
             ))),
+            Action::Delete(image) => lines.push(Line::from(format!("rm \"{}\"", image.display()))),
             _ => {}
         }
     }
