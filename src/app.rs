@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use std::io::prelude::*;
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     fs::File,
     path::{Path, PathBuf},
     time::Instant,
@@ -43,7 +43,7 @@ pub struct App {
     pub script_offset: (u16, u16),
     pub images: Vec<PathBuf>,
     pub current: usize,
-    pub key_mapping: HashMap<char, PathBuf>,
+    pub key_mapping: BTreeMap<char, PathBuf>,
     pub actions: Vec<Action>,
     pub output: String,
     pub enable_input: bool,
@@ -59,7 +59,7 @@ impl Default for App {
             script_offset: (0, 0),
             current: 0,
             images: vec![],
-            key_mapping: HashMap::new(),
+            key_mapping: BTreeMap::new(),
             actions: vec![],
             output: "".to_string(),
             enable_input: false,
@@ -183,8 +183,8 @@ impl App {
 
     pub fn parse_key_mapping(
         args: Vec<(char, PathBuf)>,
-    ) -> Result<(HashMap<char, PathBuf>, Vec<Action>)> {
-        let mut key_mapping = HashMap::new();
+    ) -> Result<(BTreeMap<char, PathBuf>, Vec<Action>)> {
+        let mut key_mapping = BTreeMap::new();
         let mut actions = vec![];
 
         for (key, path_buf) in args.into_iter() {
