@@ -73,7 +73,7 @@ impl Default for App {
 
 impl App {
     pub fn new(opt: Opt) -> Result<Self> {
-        let images = App::parse_images(opt.input)?;
+        let images = App::parse_images(opt.input, opt.recurse);
         let (key_mapping, actions) = App::parse_key_mapping(opt.bind)?;
 
         Ok(App {
@@ -209,30 +209,47 @@ impl App {
         Ok((key_mapping, actions))
     }
 
-    pub fn parse_images(args: Vec<PathBuf>) -> Result<Vec<PathBuf>> {
+    pub fn parse_images(args: Vec<PathBuf>, recurse: bool) -> Vec<PathBuf> {
         let mut images: Vec<PathBuf> = vec![];
 
         for input in args.into_iter() {
-            let path = input.as_path();
+            images.extend(App::discover_images(input.as_path(), recurse, true, &mut 0));
+        }
 
-            if path.is_file() && App::is_image(path) {
-                images.push(input.clone());
+        images
+    }
+
+    fn discover_images(path: &Path, recurse: bool, is_first: bool, parent_count: &mut u16) -> Vec<PathBuf> {
+        let dir_iter = path.read_dir();
+        if let Err(_) = dir_iter {
+            // ignore errors (amongst others: not a dir, permission errors,
+            // doesn't exist), neither of these are fatal and we can ignore
+            // them.
+            return vec![];
+        }
+
+        let mut images = vec![];
+        for entry in dir_iter.unwrap().flatten() {
+            if *parent_count > 500 {
+                // Limit the number of images, to halt a potential runaway
+                // program. The user will probably appreciate working with fewer
+                // images, but at least being able to start the program.
+                //
+                // After having run the output script, the next invocation would
+                // handle the following 500 images, etc.
+                break;
             }
+            let path = entry.path();
 
-            if path.is_dir() {
-                for entry in path.read_dir()?.flatten() {
-                    let path = entry.path();
-
-                    if !App::is_image(path.as_path()) {
-                        continue;
-                    }
-
-                    images.push(path);
-                }
+            if path.is_dir() && (is_first || recurse){
+                images.extend(App::discover_images(&path, recurse, false, parent_count));
+            } else if App::is_image(path.as_path()) {
+                *parent_count += 1;
+                images.push(path);
             }
         }
 
-        Ok(images)
+        images
     }
 
     fn is_image(file: &Path) -> bool {

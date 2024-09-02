@@ -47,6 +47,9 @@ pub struct Opt {
     )]
     input: Vec<PathBuf>,
 
+    #[structopt(short, long, help = "Search for images recursively in the input folders")]
+    recurse: bool,
+
     #[structopt(
         short,
         long,
