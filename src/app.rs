@@ -219,9 +219,14 @@ impl App {
         images
     }
 
-    fn discover_images(path: &Path, recurse: bool, is_first: bool, parent_count: &mut u16) -> Vec<PathBuf> {
+    fn discover_images(
+        path: &Path,
+        recurse: bool,
+        is_first: bool,
+        parent_count: &mut u16,
+    ) -> Vec<PathBuf> {
         let dir_iter = path.read_dir();
-        if let Err(_) = dir_iter {
+        if dir_iter.is_err() {
             // ignore errors (amongst others: not a dir, permission errors,
             // doesn't exist), neither of these are fatal and we can ignore
             // them.
@@ -241,7 +246,7 @@ impl App {
             }
             let path = entry.path();
 
-            if path.is_dir() && (is_first || recurse){
+            if path.is_dir() && (is_first || recurse) {
                 images.extend(App::discover_images(&path, recurse, false, parent_count));
             } else if App::is_image(path.as_path()) {
                 *parent_count += 1;

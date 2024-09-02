@@ -5,10 +5,10 @@ use crate::app::{Action, App};
 pub fn handle_key_main(key: Key, app: &mut App) {
     match key {
         Key::Backspace => {
-            app.current_image().map(|i|
-                app.push_action(Action::Delete(i))
-            );
-        },
+            if let Some(i) = app.current_image() {
+                app.push_action(Action::Delete(i));
+            }
+        }
         Key::Ctrl(key) => handle_app_key(key, app),
         Key::Char(key) => handle_mapping_key(key, app),
         _ => {}

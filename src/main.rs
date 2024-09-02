@@ -5,11 +5,11 @@ mod input;
 mod render;
 
 use anyhow::{anyhow, Result};
+use expanduser::expanduser;
 use ratatui::{backend::TermionBackend, Terminal};
 use std::{io, path::PathBuf, time::Duration};
 use structopt::StructOpt;
 use termion::{cursor::Goto, event::Key, raw::IntoRawMode, screen::IntoAlternateScreen};
-use expanduser::expanduser;
 
 use crate::app::{App, TabId};
 use crate::event::{Event, EventsListener};
@@ -47,7 +47,11 @@ pub struct Opt {
     )]
     input: Vec<PathBuf>,
 
-    #[structopt(short, long, help = "Search for images recursively in the input folders")]
+    #[structopt(
+        short,
+        long,
+        help = "Search for images recursively in the input folders"
+    )]
     recurse: bool,
 
     #[structopt(
