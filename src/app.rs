@@ -23,6 +23,7 @@ pub enum Action {
     Move(PathBuf, PathBuf),
     Rename(String),
     MkDir(PathBuf),
+    Delete(PathBuf),
 }
 
 impl Action {
@@ -32,8 +33,8 @@ impl Action {
 
     pub fn queue_step(&self) -> usize {
         match self {
-            Action::Skip(_) | Action::Move(_, _) => 1,
-            _ => 0,
+            Action::Skip(_) | Action::Move(_, _) | Action::Delete(_) => 1,
+            Action::Rename(_) | Action::MkDir(_) => 0,
         }
     }
 }
@@ -169,6 +170,7 @@ impl App {
                     image_path.display(),
                     folder.display()
                 )),
+                Action::Delete(image) => lines.push(format!("rm \"{}\"", image.display())),
                 _ => {}
             }
         }
