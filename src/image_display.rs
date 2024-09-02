@@ -111,7 +111,7 @@ impl ImageDisplay {
         let outputs = out.unwrap();
         let outputs = outputs.trim().split(' ').collect::<Vec<&str>>();
         if outputs.len() < 2 {
-            return Err(anyhow!("w3mimagedisplay wrong output"));
+            return Err(anyhow!("w3mimagedisplay wrong output (image dimensions) for input file {}", image_path.display()));
         }
 
         let width = outputs[0].parse::<u32>()?;
@@ -140,7 +140,7 @@ impl ImageDisplay {
         let outputs = outputs.trim().split(' ').collect::<Vec<&str>>();
 
         if outputs.len() < 2 {
-            return Err(anyhow!("w3mimagedisplay wrong output"));
+            return Err(anyhow!("w3mimagedisplay wrong output (font dimensions)"));
         }
 
         let xwidth = outputs[0].parse::<u32>()? + 2;
