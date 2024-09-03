@@ -258,9 +258,28 @@ impl App {
     }
 
     fn is_image(file: &Path) -> bool {
+        // first, a quick check for the file extension
         let image_exts = ["jpeg", "jpg", "png"];
-        file.extension().map_or(false, |f| {
+        let looks_like_image = file.extension().map_or(false, |f| {
             image_exts.iter().any(|ext| f.to_str() == Some(ext))
-        })
+        });
+        if !looks_like_image {
+            return false;
+        }
+
+        // second, check the file's mime type by reading the first few bytes
+        let kind = infer::get_from_path(file);
+        if kind.is_err() {
+            // could not read file
+            return false;
+        }
+        let kind = kind.unwrap();
+        if kind.is_none() {
+            // unknown file type
+            return false;
+        }
+
+        let kind = kind.unwrap();
+        matches!(kind.mime_type(), "image/jpeg" | "image/png")
     }
 }
