@@ -7,7 +7,8 @@ use ratatui::{
     text::{Line, Text},
     widgets::{Block, Borders, Paragraph, Row, Table, Tabs},
 };
-use std::time::Duration;
+use std::{env, path, time::Duration};
+use tico::tico;
 
 use crate::app::{Action, App};
 use crate::image_display::ImageDisplay;
@@ -135,15 +136,37 @@ where
     f.render_widget(paragraph, window);
 }
 
+fn shorten_path(path: &path::Path, home_dir: Option<&str>) -> String {
+    // Ugly hack - tico minimizes the final directory in a path, if the
+    // path ends with "/". For all purposes, it's equivalent to not
+    // having the "/" at the end. I.e. "mv a b" is the same as "mv a
+    // b/", if b already is a directory (and it is, because the mkdir
+    // calls are done up front, in the exported script).
+    let path = &path.display().to_string();
+    let path = if path.ends_with(path::MAIN_SEPARATOR) {
+        &path[..path.len() - 1]
+    } else {
+        path
+    };
+    tico(path, home_dir)
+}
+
 fn render_key_mapping<B>(f: &mut Frame<B>, app: &App, window: Rect)
 where
     B: Backend,
 {
     let key_mapping_block = Block::default().borders(Borders::ALL).title("Key mapping");
-    let keys = app
-        .key_mapping
-        .iter()
-        .map(|(key, path)| Row::new(vec![key.to_string(), path.display().to_string()]));
+    // This is not working on Windows according to https://doc.rust-lang.org/std/env/fn.home_dir.html
+    // There are probably more non-Windows dependencies, like w3m-img
+    // Replace with a cross-platform solution, if needed.
+    #[allow(deprecated)]
+    let home_dir = env::home_dir().map(|p| p.display().to_string());
+    let keys = app.key_mapping.iter().map(|(key, path)| {
+        Row::new(vec![
+            key.to_string(),
+            shorten_path(path, home_dir.as_deref()),
+        ])
+    });
 
     let key_mapping = Table::new(keys)
         .widths([Constraint::Length(3), Constraint::Length(25)].as_ref())
