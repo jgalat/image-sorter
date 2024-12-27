@@ -212,44 +212,50 @@ impl App {
     pub fn parse_images(args: Vec<PathBuf>, recurse: bool) -> Vec<PathBuf> {
         let mut images: Vec<PathBuf> = vec![];
 
-        for input in args.into_iter() {
-            images.extend(App::discover_images(input.as_path(), recurse, true, &mut 0));
+        let mut count = 0u32;
+
+        for input in args {
+            if App::is_image(&input) {
+                count += 1;
+                images.push(input);
+            } else if input.is_dir() {
+                images.extend(App::discover_images(&input, recurse, &mut count));
+            }
         }
 
         images
     }
 
-    fn discover_images(
-        path: &Path,
-        recurse: bool,
-        is_first: bool,
-        parent_count: &mut u16,
-    ) -> Vec<PathBuf> {
-        let dir_iter = path.read_dir();
-        if dir_iter.is_err() {
-            // ignore errors (amongst others: not a dir, permission errors,
-            // doesn't exist), neither of these are fatal and we can ignore
-            // them.
-            return vec![];
+    fn discover_images(path: &Path, recurse: bool, count: &mut u32) -> Vec<PathBuf> {
+        let mut images = vec![];
+
+        if !path.is_dir() {
+            return images;
         }
 
-        let mut images = vec![];
-        for entry in dir_iter.unwrap().flatten() {
-            if *parent_count > 500 {
+        let entries = match path.read_dir() {
+            Ok(entries) => entries,
+            Err(_) => return images,
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+
+            if *count >= 500 {
+                // TODO: Add an option for this value
                 // Limit the number of images, to halt a potential runaway
                 // program. The user will probably appreciate working with fewer
                 // images, but at least being able to start the program.
                 //
                 // After having run the output script, the next invocation would
-                // handle the following 500 images, etc.
+                // handle the following 500 images,
                 break;
             }
-            let path = entry.path();
 
-            if path.is_dir() && (is_first || recurse) {
-                images.extend(App::discover_images(&path, recurse, false, parent_count));
-            } else if App::is_image(path.as_path()) {
-                *parent_count += 1;
+            if path.is_dir() && recurse {
+                images.extend(App::discover_images(&path, recurse, count));
+            } else if App::is_image(&path) {
+                *count += 1;
                 images.push(path);
             }
         }
@@ -257,10 +263,14 @@ impl App {
         images
     }
 
-    fn is_image(file: &Path) -> bool {
+    fn is_image(path: &Path) -> bool {
+        if !path.is_file() {
+            return false;
+        }
+
         // first, a quick check for the file extension
         let image_exts = ["jpeg", "jpg", "png"];
-        let looks_like_image = file.extension().map_or(false, |f| {
+        let looks_like_image = path.extension().map_or(false, |f| {
             image_exts.iter().any(|ext| f.to_str() == Some(ext))
         });
         if !looks_like_image {
@@ -268,7 +278,7 @@ impl App {
         }
 
         // second, check the file's mime type by reading the first few bytes
-        let kind = infer::get_from_path(file);
+        let kind = infer::get_from_path(path);
         if kind.is_err() {
             // could not read file
             return false;
