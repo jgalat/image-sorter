@@ -76,13 +76,13 @@ fn main() -> Result<()> {
     let backend = TermionBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut image_display = ImageDisplay::new()?;
+    let image_display = ImageDisplay::new()?;
 
     loop {
         terminal.draw(|f| {
             let window = render_layout(f, &app);
             if let Err(err) = match app.current_tab() {
-                TabId::Main => render_main(f, &app, &mut image_display, window),
+                TabId::Main => render_main(f, &app, &image_display, window),
                 TabId::Script => render_script(f, &app, window),
             } {
                 eprintln!("ERROR: {:?}", err);

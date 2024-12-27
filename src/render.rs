@@ -37,7 +37,7 @@ where
 pub fn render_main<B>(
     f: &mut Frame<B>,
     app: &App,
-    image_display: &mut ImageDisplay,
+    image_display: &ImageDisplay,
     window: Rect,
 ) -> Result<()>
 where
